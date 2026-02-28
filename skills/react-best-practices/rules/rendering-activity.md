@@ -1,15 +1,15 @@
 ---
-title: Use Activity Component for Show/Hide
-impact: MEDIUM
-impactDescription: preserves state/DOM
+title: 使用 Activity 组件处理显示/隐藏
+impact: 中等
+impactDescription: 保留状态/DOM
 tags: rendering, activity, visibility, state-preservation
 ---
 
-## Use Activity Component for Show/Hide
+## 使用 Activity 组件处理显示/隐藏
 
-Use React's `<Activity>` to preserve state/DOM for expensive components that frequently toggle visibility.
+使用 React 的 `<Activity>` 为频繁切换可见性的昂贵组件保留状态/DOM。
 
-**Usage:**
+**用法：**
 
 ```tsx
 import { Activity } from 'react'
@@ -23,4 +23,4 @@ function Dropdown({ isOpen }: Props) {
 }
 ```
 
-Avoids expensive re-renders and state loss.
+避免昂贵的重新渲染和状态丢失。

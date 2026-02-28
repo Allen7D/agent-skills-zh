@@ -1,15 +1,15 @@
 ---
-title: Initialize App Once, Not Per Mount
-impact: LOW-MEDIUM
-impactDescription: avoids duplicate init in development
+title: 初始化应用一次，而非每次挂载
+impact: 低-中等
+impactDescription: 避免开发中的重复初始化
 tags: initialization, useEffect, app-startup, side-effects
 ---
 
-## Initialize App Once, Not Per Mount
+## 初始化应用一次，而非每次挂载
 
-Do not put app-wide initialization that must run once per app load inside `useEffect([])` of a component. Components can remount and effects will re-run. Use a module-level guard or top-level init in the entry module instead.
+不要将必须在每次应用加载时运行一次的全应用初始化放在组件的 `useEffect([])` 内。组件可能重新挂载，effects 会重新运行。请使用模块级守卫或在入口模块中进行顶级初始化。
 
-**Incorrect (runs twice in dev, re-runs on remount):**
+**错误示例（在开发环境中运行两次，重新挂载时重新运行）：**
 
 ```tsx
 function Comp() {
@@ -22,7 +22,7 @@ function Comp() {
 }
 ```
 
-**Correct (once per app load):**
+**正确示例（每次应用加载只运行一次）：**
 
 ```tsx
 let didInit = false
@@ -39,4 +39,4 @@ function Comp() {
 }
 ```
 
-Reference: [Initializing the application](https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application)
+参考：[初始化应用](https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application)

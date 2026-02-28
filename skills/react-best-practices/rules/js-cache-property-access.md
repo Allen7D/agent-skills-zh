@@ -1,15 +1,15 @@
 ---
-title: Cache Property Access in Loops
-impact: LOW-MEDIUM
-impactDescription: reduces lookups
+title: 在循环中缓存属性访问
+impact: 低-中等
+impactDescription: 减少查找
 tags: javascript, loops, optimization, caching
 ---
 
-## Cache Property Access in Loops
+## 在循环中缓存属性访问
 
-Cache object property lookups in hot paths.
+在热点路径中缓存对象属性查找。
 
-**Incorrect (3 lookups × N iterations):**
+**错误示例（3 次查找 × N 次迭代）：**
 
 ```typescript
 for (let i = 0; i < arr.length; i++) {
@@ -17,7 +17,7 @@ for (let i = 0; i < arr.length; i++) {
 }
 ```
 
-**Correct (1 lookup total):**
+**正确示例（总共1次查找）：**
 
 ```typescript
 const value = obj.config.settings.value

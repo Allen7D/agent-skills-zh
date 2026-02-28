@@ -1,19 +1,19 @@
 ---
-title: Prevent Hydration Mismatch Without Flickering
-impact: MEDIUM
-impactDescription: avoids visual flicker and hydration errors
+title: 防止水合不匹配且无闪烁
+impact: 中等
+impactDescription: 避免视觉闪烁和水合错误
 tags: rendering, ssr, hydration, localStorage, flicker
 ---
 
-## Prevent Hydration Mismatch Without Flickering
+## 防止水合不匹配且无闪烁
 
-When rendering content that depends on client-side storage (localStorage, cookies), avoid both SSR breakage and post-hydration flickering by injecting a synchronous script that updates the DOM before React hydrates.
+当渲染依赖于客户端存储（localStorage、cookies）的内容时，通过注入同步脚本在 React 水合之前更新 DOM，来同时避免 SSR 破坏和水合后闪烁。
 
-**Incorrect (breaks SSR):**
+**错误示例（破坏 SSR）：**
 
 ```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
-  // localStorage is not available on server - throws error
+  // localStorage 在服务器上不可用 - 抛出错误
   const theme = localStorage.getItem('theme') || 'light'
   
   return (
@@ -24,9 +24,9 @@ function ThemeWrapper({ children }: { children: ReactNode }) {
 }
 ```
 
-Server-side rendering will fail because `localStorage` is undefined.
+服务器端渲染将失败，因为 `localStorage` 未定义。
 
-**Incorrect (visual flickering):**
+**错误示例（视觉闪烁）：**
 
 ```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -48,9 +48,9 @@ function ThemeWrapper({ children }: { children: ReactNode }) {
 }
 ```
 
-Component first renders with default value (`light`), then updates after hydration, causing a visible flash of incorrect content.
+组件首先使用默认值（`light`）渲染，然后在水合后更新，导致显示错误内容的可见闪烁。
 
-**Correct (no flicker, no hydration mismatch):**
+**正确示例（无闪烁，无水合不匹配）：**
 
 ```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -77,6 +77,6 @@ function ThemeWrapper({ children }: { children: ReactNode }) {
 }
 ```
 
-The inline script executes synchronously before showing the element, ensuring the DOM already has the correct value. No flickering, no hydration mismatch.
+内联脚本在显示元素之前同步执行，确保 DOM 已经具有正确的值。无闪烁，无水合不匹配。
 
-This pattern is especially useful for theme toggles, user preferences, authentication states, and any client-only data that should render immediately without flashing default values.
+这种模式对于主题切换、用户偏好、身份验证状态和任何仅限客户端的数据（应该立即渲染而不闪烁默认值）特别有用。

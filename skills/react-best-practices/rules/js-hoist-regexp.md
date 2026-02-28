@@ -1,15 +1,15 @@
 ---
-title: Hoist RegExp Creation
-impact: LOW-MEDIUM
-impactDescription: avoids recreation
+title: 提升 RegExp 创建
+impact: 低-中等
+impactDescription: 避免重复创建
 tags: javascript, regexp, optimization, memoization
 ---
 
-## Hoist RegExp Creation
+## 提升 RegExp 创建
 
-Don't create RegExp inside render. Hoist to module scope or memoize with `useMemo()`.
+不要在渲染内创建 RegExp。提升到模块作用域或使用 `useMemo()` 缓存。
 
-**Incorrect (new RegExp every render):**
+**错误示例Ｈ每次渲染都新建 RegExp）：**
 
 ```tsx
 function Highlighter({ text, query }: Props) {
@@ -19,7 +19,7 @@ function Highlighter({ text, query }: Props) {
 }
 ```
 
-**Correct (memoize or hoist):**
+**正确示例（缓存或提升）：**
 
 ```tsx
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -34,9 +34,9 @@ function Highlighter({ text, query }: Props) {
 }
 ```
 
-**Warning (global regex has mutable state):**
+**警告（全局正则表达式有可变状态）：**
 
-Global regex (`/g`) has mutable `lastIndex` state:
+全局正则表达式（`/g`）有可变的 `lastIndex` 状态：
 
 ```typescript
 const regex = /foo/g

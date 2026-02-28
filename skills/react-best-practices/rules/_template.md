@@ -1,28 +1,28 @@
 ---
-title: Rule Title Here
-impact: MEDIUM
-impactDescription: Optional description of impact (e.g., "20-50% improvement")
-tags: tag1, tag2
+title: 规则标题
+impact: 中等
+impactDescription: 影响的可选描述（例如："20-50% 改善"）
+tags: 标签1, 标签2
 ---
 
-## Rule Title Here
+## 规则标题
 
-**Impact: MEDIUM (optional impact description)**
+**影响级别：中等（可选影响描述）**
 
-Brief explanation of the rule and why it matters. This should be clear and concise, explaining the performance implications.
+规则的简要解释以及其重要性。这应该清晰简洁，解释性能影响。
 
-**Incorrect (description of what's wrong):**
+**错误示例（问题所在的描述）：**
 
 ```typescript
-// Bad code example here
+// 错误代码示例
 const bad = example()
 ```
 
-**Correct (description of what's right):**
+**正确示例（正确做法的描述）：**
 
 ```typescript
-// Good code example here
+// 正确代码示例
 const good = example()
 ```
 
-Reference: [Link to documentation or resource](https://example.com)
+参考：[文档或资源链接](https://example.com)

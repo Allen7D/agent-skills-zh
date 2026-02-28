@@ -1,31 +1,31 @@
 ---
-title: Defer Await Until Needed
-impact: HIGH
-impactDescription: avoids blocking unused code paths
+title: 推迟 Await 直到需要时
+impact: 高
+impactDescription: 避免阻塞未使用的代码路径
 tags: async, await, conditional, optimization
 ---
 
-## Defer Await Until Needed
+## 推迟 Await 直到需要时
 
-Move `await` operations into the branches where they're actually used to avoid blocking code paths that don't need them.
+将 `await` 操作移动到实际使用它们的分支中，以避免阻塞不需要它们的代码路径。
 
-**Incorrect (blocks both branches):**
+**错误示例（阻塞两个分支）：**
 
 ```typescript
 async function handleRequest(userId: string, skipProcessing: boolean) {
   const userData = await fetchUserData(userId)
   
   if (skipProcessing) {
-    // Returns immediately but still waited for userData
+    // 立即返回但仍然等待了 userData
     return { skipped: true }
   }
   
-  // Only this branch uses userData
+  // 只有这个分支使用 userData
   return processUserData(userData)
 }
 ```
 
-**Correct (only blocks when needed):**
+**正确示例（只在需要时阻塞）：**
 
 ```typescript
 async function handleRequest(userId: string, skipProcessing: boolean) {
@@ -40,7 +40,7 @@ async function handleRequest(userId: string, skipProcessing: boolean) {
 }
 ```
 
-**Another example (early return optimization):**
+**另一个例子（早期返回优化）：**
 
 ```typescript
 // Incorrect: always fetches permissions
@@ -77,4 +77,4 @@ async function updateResource(resourceId: string, userId: string) {
 }
 ```
 
-This optimization is especially valuable when the skipped branch is frequently taken, or when the deferred operation is expensive.
+这种优化在被跳过的分支经常被执行或延迟操作成本昂贵时尤其有价值。

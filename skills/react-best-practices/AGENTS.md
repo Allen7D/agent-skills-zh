@@ -1,140 +1,138 @@
-# React Best Practices
+# React 最佳实践
 
-**Version 1.0.0**  
-Vercel Engineering  
-January 2026
+**版本 1.0.0**  
+Vercel 工程团队  
+2026年1月
 
-> **Note:**  
-> This document is mainly for agents and LLMs to follow when maintaining,  
-> generating, or refactoring React and Next.js codebases. Humans  
-> may also find it useful, but guidance here is optimized for automation  
-> and consistency by AI-assisted workflows.
+> **注意：**  
+> 本文档主要供智能体和大语言模型在维护、生成或重构 React 和 Next.js 代码库时遵循。  
+> 人类开发者也可参考，但本指南针对 AI 自动化流程和一致性进行了优化。
 
 ---
 
-## Abstract
+## 摘要
 
-Comprehensive performance optimization guide for React and Next.js applications, designed for AI agents and LLMs. Contains 40+ rules across 8 categories, prioritized by impact from critical (eliminating waterfalls, reducing bundle size) to incremental (advanced patterns). Each rule includes detailed explanations, real-world examples comparing incorrect vs. correct implementations, and specific impact metrics to guide automated refactoring and code generation.
-
----
-
-## Table of Contents
-
-1. [Eliminating Waterfalls](#1-eliminating-waterfalls) — **CRITICAL**
-   - 1.1 [Defer Await Until Needed](#11-defer-await-until-needed)
-   - 1.2 [Dependency-Based Parallelization](#12-dependency-based-parallelization)
-   - 1.3 [Prevent Waterfall Chains in API Routes](#13-prevent-waterfall-chains-in-api-routes)
-   - 1.4 [Promise.all() for Independent Operations](#14-promiseall-for-independent-operations)
-   - 1.5 [Strategic Suspense Boundaries](#15-strategic-suspense-boundaries)
-2. [Bundle Size Optimization](#2-bundle-size-optimization) — **CRITICAL**
-   - 2.1 [Avoid Barrel File Imports](#21-avoid-barrel-file-imports)
-   - 2.2 [Conditional Module Loading](#22-conditional-module-loading)
-   - 2.3 [Defer Non-Critical Third-Party Libraries](#23-defer-non-critical-third-party-libraries)
-   - 2.4 [Dynamic Imports for Heavy Components](#24-dynamic-imports-for-heavy-components)
-   - 2.5 [Preload Based on User Intent](#25-preload-based-on-user-intent)
-3. [Server-Side Performance](#3-server-side-performance) — **HIGH**
-   - 3.1 [Authenticate Server Actions Like API Routes](#31-authenticate-server-actions-like-api-routes)
-   - 3.2 [Avoid Duplicate Serialization in RSC Props](#32-avoid-duplicate-serialization-in-rsc-props)
-   - 3.3 [Cross-Request LRU Caching](#33-cross-request-lru-caching)
-   - 3.4 [Minimize Serialization at RSC Boundaries](#34-minimize-serialization-at-rsc-boundaries)
-   - 3.5 [Parallel Data Fetching with Component Composition](#35-parallel-data-fetching-with-component-composition)
-   - 3.6 [Per-Request Deduplication with React.cache()](#36-per-request-deduplication-with-reactcache)
-   - 3.7 [Use after() for Non-Blocking Operations](#37-use-after-for-non-blocking-operations)
-4. [Client-Side Data Fetching](#4-client-side-data-fetching) — **MEDIUM-HIGH**
-   - 4.1 [Deduplicate Global Event Listeners](#41-deduplicate-global-event-listeners)
-   - 4.2 [Use Passive Event Listeners for Scrolling Performance](#42-use-passive-event-listeners-for-scrolling-performance)
-   - 4.3 [Use SWR for Automatic Deduplication](#43-use-swr-for-automatic-deduplication)
-   - 4.4 [Version and Minimize localStorage Data](#44-version-and-minimize-localstorage-data)
-5. [Re-render Optimization](#5-re-render-optimization) — **MEDIUM**
-   - 5.1 [Calculate Derived State During Rendering](#51-calculate-derived-state-during-rendering)
-   - 5.2 [Defer State Reads to Usage Point](#52-defer-state-reads-to-usage-point)
-   - 5.3 [Do not wrap a simple expression with a primitive result type in useMemo](#53-do-not-wrap-a-simple-expression-with-a-primitive-result-type-in-usememo)
-   - 5.4 [Extract Default Non-primitive Parameter Value from Memoized Component to Constant](#54-extract-default-non-primitive-parameter-value-from-memoized-component-to-constant)
-   - 5.5 [Extract to Memoized Components](#55-extract-to-memoized-components)
-   - 5.6 [Narrow Effect Dependencies](#56-narrow-effect-dependencies)
-   - 5.7 [Put Interaction Logic in Event Handlers](#57-put-interaction-logic-in-event-handlers)
-   - 5.8 [Subscribe to Derived State](#58-subscribe-to-derived-state)
-   - 5.9 [Use Functional setState Updates](#59-use-functional-setstate-updates)
-   - 5.10 [Use Lazy State Initialization](#510-use-lazy-state-initialization)
-   - 5.11 [Use Transitions for Non-Urgent Updates](#511-use-transitions-for-non-urgent-updates)
-   - 5.12 [Use useRef for Transient Values](#512-use-useref-for-transient-values)
-6. [Rendering Performance](#6-rendering-performance) — **MEDIUM**
-   - 6.1 [Animate SVG Wrapper Instead of SVG Element](#61-animate-svg-wrapper-instead-of-svg-element)
-   - 6.2 [CSS content-visibility for Long Lists](#62-css-content-visibility-for-long-lists)
-   - 6.3 [Hoist Static JSX Elements](#63-hoist-static-jsx-elements)
-   - 6.4 [Optimize SVG Precision](#64-optimize-svg-precision)
-   - 6.5 [Prevent Hydration Mismatch Without Flickering](#65-prevent-hydration-mismatch-without-flickering)
-   - 6.6 [Suppress Expected Hydration Mismatches](#66-suppress-expected-hydration-mismatches)
-   - 6.7 [Use Activity Component for Show/Hide](#67-use-activity-component-for-showhide)
-   - 6.8 [Use Explicit Conditional Rendering](#68-use-explicit-conditional-rendering)
-   - 6.9 [Use useTransition Over Manual Loading States](#69-use-usetransition-over-manual-loading-states)
-7. [JavaScript Performance](#7-javascript-performance) — **LOW-MEDIUM**
-   - 7.1 [Avoid Layout Thrashing](#71-avoid-layout-thrashing)
-   - 7.2 [Build Index Maps for Repeated Lookups](#72-build-index-maps-for-repeated-lookups)
-   - 7.3 [Cache Property Access in Loops](#73-cache-property-access-in-loops)
-   - 7.4 [Cache Repeated Function Calls](#74-cache-repeated-function-calls)
-   - 7.5 [Cache Storage API Calls](#75-cache-storage-api-calls)
-   - 7.6 [Combine Multiple Array Iterations](#76-combine-multiple-array-iterations)
-   - 7.7 [Early Length Check for Array Comparisons](#77-early-length-check-for-array-comparisons)
-   - 7.8 [Early Return from Functions](#78-early-return-from-functions)
-   - 7.9 [Hoist RegExp Creation](#79-hoist-regexp-creation)
-   - 7.10 [Use Loop for Min/Max Instead of Sort](#710-use-loop-for-minmax-instead-of-sort)
-   - 7.11 [Use Set/Map for O(1) Lookups](#711-use-setmap-for-o1-lookups)
-   - 7.12 [Use toSorted() Instead of sort() for Immutability](#712-use-tosorted-instead-of-sort-for-immutability)
-8. [Advanced Patterns](#8-advanced-patterns) — **LOW**
-   - 8.1 [Initialize App Once, Not Per Mount](#81-initialize-app-once-not-per-mount)
-   - 8.2 [Store Event Handlers in Refs](#82-store-event-handlers-in-refs)
-   - 8.3 [useEffectEvent for Stable Callback Refs](#83-useeffectevent-for-stable-callback-refs)
+React 和 Next.js 应用的综合性能优化指南，专为 AI 智能体和大语言模型设计。涵盖 8 个类别下 40+ 条规则，按影响力从关键（消除瀑布链、减少包体积）到增量（高级模式）排序。每条规则包含详细解释、真实案例（错误与正确实现对比）、具体影响指标，指导自动化重构和代码生成。
 
 ---
 
-## 1. Eliminating Waterfalls
+## 目录
 
-**Impact: CRITICAL**
+1. [消除瀑布链](#1-eliminating-waterfalls) — **致命**
+   - 1.1 [仅在需要时再 await](#11-defer-await-until-needed)
+   - 1.2 [依赖驱动并行化](#12-dependency-based-parallelization)
+   - 1.3 [API 路由防止瀑布链](#13-prevent-waterfall-chains-in-api-routes)
+   - 1.4 [独立操作用 Promise.all()](#14-promiseall-for-independent-operations)
+   - 1.5 [战略性 Suspense 边界](#15-strategic-suspense-boundaries)
+2. [包体积优化](#2-bundle-size-optimization) — **致命**
+   - 2.1 [避免 barrel 文件导入](#21-avoid-barrel-file-imports)
+   - 2.2 [条件模块加载](#22-conditional-module-loading)
+   - 2.3 [延后加载非关键三方库](#23-defer-non-critical-third-party-libraries)
+   - 2.4 [重组件用动态导入](#24-dynamic-imports-for-heavy-components)
+   - 2.5 [基于用户意图预加载](#25-preload-based-on-user-intent)
+3. [服务端性能](#3-server-side-performance) — **高**
+   - 3.1 [服务端操作需鉴权](#31-authenticate-server-actions-like-api-routes)
+   - 3.2 [RSC props 避免重复序列化](#32-avoid-duplicate-serialization-in-rsc-props)
+   - 3.3 [跨请求 LRU 缓存](#33-cross-request-lru-caching)
+   - 3.4 [RSC 边界最小化序列化](#34-minimize-serialization-at-rsc-boundaries)
+   - 3.5 [组件组合并行数据获取](#35-parallel-data-fetching-with-component-composition)
+   - 3.6 [React.cache() 单请求去重](#36-per-request-deduplication-with-reactcache)
+   - 3.7 [after() 非阻塞操作](#37-use-after-for-non-blocking-operations)
+4. [客户端数据获取](#4-client-side-data-fetching) — **中高**
+   - 4.1 [全局事件监听去重](#41-deduplicate-global-event-listeners)
+   - 4.2 [滚动性能用 passive 监听](#42-use-passive-event-listeners-for-scrolling-performance)
+   - 4.3 [SWR 自动去重](#43-use-swr-for-automatic-deduplication)
+   - 4.4 [localStorage 数据版本化与最小化](#44-version-and-minimize-localstorage-data)
+5. [重渲染优化](#5-re-render-optimization) — **中**
+   - 5.1 [渲染时派生状态](#51-calculate-derived-state-during-rendering)
+   - 5.2 [延迟读取状态到使用点](#52-defer-state-reads-to-usage-point)
+   - 5.3 [简单原始表达式不需 useMemo](#53-do-not-wrap-a-simple-expression-with-a-primitive-result-type-in-usememo)
+   - 5.4 [memo 组件默认非原始参数提为常量](#54-extract-default-non-primitive-parameter-value-from-memoized-component-to-constant)
+   - 5.5 [提取为 memo 组件](#55-extract-to-memoized-components)
+   - 5.6 [缩小 effect 依赖范围](#56-narrow-effect-dependencies)
+   - 5.7 [交互逻辑放事件处理器](#57-put-interaction-logic-in-event-handlers)
+   - 5.8 [订阅派生状态](#58-subscribe-to-derived-state)
+   - 5.9 [setState 用函数式更新](#59-use-functional-setstate-updates)
+   - 5.10 [useState 用懒初始化](#510-use-lazy-state-initialization)
+   - 5.11 [非紧急更新用 transition](#511-use-transitions-for-non-urgent-updates)
+   - 5.12 [频繁临时值用 useRef](#512-use-useref-for-transient-values)
+6. [渲染性能](#6-rendering-performance) — **中**
+   - 6.1 [动画应包裹 div 而非 SVG 元素](#61-animate-svg-wrapper-instead-of-svg-element)
+   - 6.2 [长列表用 content-visibility](#62-css-content-visibility-for-long-lists)
+   - 6.3 [静态 JSX 元素上提](#63-hoist-static-jsx-elements)
+   - 6.4 [优化 SVG 精度](#64-optimize-svg-precision)
+   - 6.5 [水合无闪烁防止不匹配](#65-prevent-hydration-mismatch-without-flickering)
+   - 6.6 [抑制预期水合警告](#66-suppress-expected-hydration-mismatches)
+   - 6.7 [显隐用 Activity 组件](#67-use-activity-component-for-showhide)
+   - 6.8 [条件渲染用三元表达式](#68-use-explicit-conditional-rendering)
+   - 6.9 [loading 状态优先用 useTransition](#69-use-usetransition-over-manual-loading-states)
+7. [JavaScript 性能](#7-javascript-性能) — **中低**
+   - 7.1 [避免布局抖动](#71-avoid-layout-thrashing)
+   - 7.2 [重复查找用索引 Map](#72-build-index-maps-for-repeated-lookups)
+   - 7.3 [循环中缓存属性访问](#73-cache-property-access-in-loops)
+   - 7.4 [重复函数调用用缓存](#74-cache-repeated-function-calls)
+   - 7.5 [缓存 Storage API 调用](#75-cache-storage-api-calls)
+   - 7.6 [合并多次数组遍历](#76-combine-multiple-array-iterations)
+   - 7.7 [数组比较先检查长度](#77-early-length-check-for-array-comparisons)
+   - 7.8 [函数尽早 return](#78-early-return-from-functions)
+   - 7.9 [RegExp 创建上提](#79-hoist-regexp-creation)
+   - 7.10 [求 min/max 用循环而非 sort](#710-use-loop-for-minmax-instead-of-sort)
+   - 7.11 [查找用 Set/Map 实现 O(1)](#711-use-setmap-for-o1-lookups)
+   - 7.12 [不可变排序用 toSorted()](#712-use-tosorted-instead-of-sort-for-immutability)
+8. [高级模式](#8-advanced-patterns) — **低**
+   - 8.1 [应用仅初始化一次](#81-initialize-app-once-not-per-mount)
+   - 8.2 [事件处理器存到 ref](#82-store-event-handlers-in-refs)
+   - 8.3 [useEffectEvent 保持回调稳定](#83-useeffectevent-for-stable-callback-refs)
 
-Waterfalls are the #1 performance killer. Each sequential await adds full network latency. Eliminating them yields the largest gains.
+---
 
-### 1.1 Defer Await Until Needed
+## 1. 消除瀑布链
 
-**Impact: HIGH (avoids blocking unused code paths)**
+**影响：致命**
 
-Move `await` operations into the branches where they're actually used to avoid blocking code paths that don't need them.
+瀑布链是性能杀手。每个顺序的 await 都会带来完整的网络延迟。消除它们能带来最大的收益。
 
-**Incorrect: blocks both branches**
+### 1.1 仅在需要时再 await
+
+**影响：高 (避免阻塞未使用的代码路径)**
+
+将 `await` 操作移到实际使用它们的分支中，避免阻塞不需要它们的代码路径。
+
+**错误：阻塞了两个分支**
 
 ```typescript
 async function handleRequest(userId: string, skipProcessing: boolean) {
   const userData = await fetchUserData(userId)
   
   if (skipProcessing) {
-    // Returns immediately but still waited for userData
+    // 返回立即但仍然等待 userData
     return { skipped: true }
   }
   
-  // Only this branch uses userData
+  // 只有这个分支使用 userData
   return processUserData(userData)
 }
 ```
 
-**Correct: only blocks when needed**
+**正确：仅在需要时阻塞**
 
 ```typescript
 async function handleRequest(userId: string, skipProcessing: boolean) {
   if (skipProcessing) {
-    // Returns immediately without waiting
+    // 返回立即而不等待
     return { skipped: true }
   }
   
-  // Fetch only when needed
+  // 只在需要时获取
   const userData = await fetchUserData(userId)
   return processUserData(userData)
 }
 ```
 
-**Another example: early return optimization**
+**另一个例子：早期返回优化**
 
 ```typescript
-// Incorrect: always fetches permissions
+// 错误：总是获取权限
 async function updateResource(resourceId: string, userId: string) {
   const permissions = await fetchPermissions(userId)
   const resource = await getResource(resourceId)
@@ -150,7 +148,7 @@ async function updateResource(resourceId: string, userId: string) {
   return await updateResourceData(resource, permissions)
 }
 
-// Correct: fetches only when needed
+// 正确：仅在需要时获取
 async function updateResource(resourceId: string, userId: string) {
   const resource = await getResource(resourceId)
   
@@ -168,15 +166,15 @@ async function updateResource(resourceId: string, userId: string) {
 }
 ```
 
-This optimization is especially valuable when the skipped branch is frequently taken, or when the deferred operation is expensive.
+此优化尤其适用于频繁跳过分支或延迟操作昂贵的情况。
 
-### 1.2 Dependency-Based Parallelization
+### 1.2 依赖驱动并行化
 
-**Impact: CRITICAL (2-10× improvement)**
+**影响：致命 (2-10× 改进)**
 
-For operations with partial dependencies, use `better-all` to maximize parallelism. It automatically starts each task at the earliest possible moment.
+对于具有部分依赖的操作，使用 `better-all` 来最大化并行性。它会自动在最早可能的时刻启动每个任务。
 
-**Incorrect: profile waits for config unnecessarily**
+**错误：profile 等待配置不必要的**
 
 ```typescript
 const [user, config] = await Promise.all([
@@ -186,7 +184,7 @@ const [user, config] = await Promise.all([
 const profile = await fetchProfile(user.id)
 ```
 
-**Correct: config and profile run in parallel**
+**正确：config 和 profile 并行运行**
 
 ```typescript
 import { all } from 'better-all'
@@ -200,7 +198,7 @@ const { user, config, profile } = await all({
 })
 ```
 
-**Alternative without extra dependencies:**
+**没有额外依赖的替代方案：**
 
 ```typescript
 const userPromise = fetchUser()
@@ -213,17 +211,17 @@ const [user, config, profile] = await Promise.all([
 ])
 ```
 
-We can also create all the promises first, and do `Promise.all()` at the end.
+我们也可以先创建所有承诺，然后在最后做 `Promise.all()`。
 
-Reference: [https://github.com/shuding/better-all](https://github.com/shuding/better-all)
+参考：[https://github.com/shuding/better-all](https://github.com/shuding/better-all)
 
-### 1.3 Prevent Waterfall Chains in API Routes
+### 1.3 API 路由防止瀑布链
 
-**Impact: CRITICAL (2-10× improvement)**
+**影响：致命 (2-10× 改进)**
 
-In API routes and Server Actions, start independent operations immediately, even if you don't await them yet.
+在 API 路由和服务器操作中，立即启动独立操作，即使你还没有 await 它们。
 
-**Incorrect: config waits for auth, data waits for both**
+**错误：config 等待 auth，data 等待两者**
 
 ```typescript
 export async function GET(request: Request) {
@@ -234,7 +232,7 @@ export async function GET(request: Request) {
 }
 ```
 
-**Correct: auth and config start immediately**
+**正确：auth 和 config 立即启动**
 
 ```typescript
 export async function GET(request: Request) {
@@ -249,15 +247,15 @@ export async function GET(request: Request) {
 }
 ```
 
-For operations with more complex dependency chains, use `better-all` to automatically maximize parallelism (see Dependency-Based Parallelization).
+对于具有更复杂依赖链的操作，使用 `better-all` 来自动最大化并行性（见依赖驱动并行化）。
 
-### 1.4 Promise.all() for Independent Operations
+### 1.4 独立操作用 Promise.all()
 
-**Impact: CRITICAL (2-10× improvement)**
+**影响：致命 (2-10× 改进)**
 
-When async operations have no interdependencies, execute them concurrently using `Promise.all()`.
+当异步操作没有相互依赖时，使用 `Promise.all()` 并行执行。
 
-**Incorrect: sequential execution, 3 round trips**
+**错误：顺序执行，3 次往返**
 
 ```typescript
 const user = await fetchUser()
@@ -265,7 +263,7 @@ const posts = await fetchPosts()
 const comments = await fetchComments()
 ```
 
-**Correct: parallel execution, 1 round trip**
+**正确：并行执行，1 次往返**
 
 ```typescript
 const [user, posts, comments] = await Promise.all([
@@ -275,17 +273,17 @@ const [user, posts, comments] = await Promise.all([
 ])
 ```
 
-### 1.5 Strategic Suspense Boundaries
+### 1.5 战略性 Suspense 边界
 
-**Impact: HIGH (faster initial paint)**
+**影响：高 (更快的初始渲染)**
 
-Instead of awaiting data in async components before returning JSX, use Suspense boundaries to show the wrapper UI faster while data loads.
+在异步组件返回 JSX 之前，使用 Suspense 边界来显示包装 UI，而数据加载。
 
-**Incorrect: wrapper blocked by data fetching**
+**错误：包装被数据获取阻塞**
 
 ```tsx
 async function Page() {
-  const data = await fetchData() // Blocks entire page
+  const data = await fetchData() // 阻塞整个页面
   
   return (
     <div>
@@ -300,9 +298,9 @@ async function Page() {
 }
 ```
 
-The entire layout waits for data even though only the middle section needs it.
+整个布局等待数据，即使只有中间部分需要它。
 
-**Correct: wrapper shows immediately, data streams in**
+**正确：包装立即显示，数据流进来**
 
 ```tsx
 function Page() {
@@ -321,18 +319,18 @@ function Page() {
 }
 
 async function DataDisplay() {
-  const data = await fetchData() // Only blocks this component
+  const data = await fetchData() // 只有这个组件被阻塞
   return <div>{data.content}</div>
 }
 ```
 
-Sidebar, Header, and Footer render immediately. Only DataDisplay waits for data.
+Sidebar、Header、Footer 立即渲染。只有 DataDisplay 等待数据。
 
-**Alternative: share promise across components**
+**替代方案：共享 promise**
 
 ```tsx
 function Page() {
-  // Start fetch immediately, but don't await
+  // 立即开始获取，但不 await
   const dataPromise = fetchData()
   
   return (
@@ -349,73 +347,73 @@ function Page() {
 }
 
 function DataDisplay({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise) // Unwraps the promise
+  const data = use(dataPromise) // 解包 promise
   return <div>{data.content}</div>
 }
 
 function DataSummary({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise) // Reuses the same promise
+  const data = use(dataPromise) // 重用同一个 promise
   return <div>{data.summary}</div>
 }
 ```
 
-Both components share the same promise, so only one fetch occurs. Layout renders immediately while both components wait together.
+两个组件共享同一个 promise，所以只发生一次 fetch。布局立即渲染，而两个组件一起等待。
 
-**When NOT to use this pattern:**
+**何时不要使用此模式：**
 
-- Critical data needed for layout decisions (affects positioning)
+- 关键数据需要布局决策（影响定位）
 
-- SEO-critical content above the fold
+- SEO-critical 内容在折叠之上
 
-- Small, fast queries where suspense overhead isn't worth it
+- 小、快的查询，其中 suspense 开销不值得
 
-- When you want to avoid layout shift (loading → content jump)
+- 当你想要避免布局移位（加载 → 内容跳转）
 
-**Trade-off:** Faster initial paint vs potential layout shift. Choose based on your UX priorities.
+**权衡：** 更快的初始渲染 vs 可能的布局移位。根据你的 UX 优先级选择。
 
 ---
 
-## 2. Bundle Size Optimization
+## 2. 包体积优化
 
-**Impact: CRITICAL**
+**影响：致命**
 
-Reducing initial bundle size improves Time to Interactive and Largest Contentful Paint.
+减少初始包体积能提高 Time to Interactive 和 Largest Contentful Paint。
 
-### 2.1 Avoid Barrel File Imports
+### 2.1 避免 barrel 文件导入
 
-**Impact: CRITICAL (200-800ms import cost, slow builds)**
+**影响：致命 (200-800ms 导入成本，慢构建)**
 
-Import directly from source files instead of barrel files to avoid loading thousands of unused modules. **Barrel files** are entry points that re-export multiple modules (e.g., `index.js` that does `export * from './module'`).
+直接从源文件导入，而不是 barrel 文件，以避免加载数千个未使用的模块。**Barrel 文件**是入口点，重新导出多个模块（例如，`index.js` 通过 `export * from './module'`）。
 
-Popular icon and component libraries can have **up to 10,000 re-exports** in their entry file. For many React packages, **it takes 200-800ms just to import them**, affecting both development speed and production cold starts.
+流行的图标和组件库可以有**多达 10,000 个 re-exports**在它们的入口文件中。对于许多 React 包，**它需要 200-800ms 仅导入它们**，影响开发速度和生产冷启动。
 
-**Why tree-shaking doesn't help:** When a library is marked as external (not bundled), the bundler can't optimize it. If you bundle it to enable tree-shaking, builds become substantially slower analyzing the entire module graph.
+**为什么 tree-shaking 不帮助：**当一个库被标记为外部（不捆绑）时，捆绑器不能优化它。如果你捆绑它以启用 tree-shaking，构建会变得显著慢下来分析整个模块图。
 
-**Incorrect: imports entire library**
+**错误：导入整个库**
 
 ```tsx
 import { Check, X, Menu } from 'lucide-react'
-// Loads 1,583 modules, takes ~2.8s extra in dev
-// Runtime cost: 200-800ms on every cold start
+// 加载 1,583 模块，需要 ~2.8s 在开发中
+// 运行时成本：200-800ms 在每次冷启动
 
 import { Button, TextField } from '@mui/material'
-// Loads 2,225 modules, takes ~4.2s extra in dev
+// 加载 2,225 模块，需要 ~4.2s 在开发中
 ```
 
-**Correct: imports only what you need**
+**正确：只导入你需要的**
 
 ```tsx
 import Check from 'lucide-react/dist/esm/icons/check'
 import X from 'lucide-react/dist/esm/icons/x'
 import Menu from 'lucide-react/dist/esm/icons/menu'
-// Loads only 3 modules (~2KB vs ~1MB)
+// 只加载 3 模块 (~2KB vs ~1MB)
 
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
-// Loads only what you use
+// 只加载你使用的东西
 ```
 
-**Alternative: Next.js 13.5+**
+**替代方案：Next.js 13.5+**
 
 ```js
 // next.config.js - use optimizePackageImports
@@ -425,24 +423,24 @@ module.exports = {
   }
 }
 
-// Then you can keep the ergonomic barrel imports:
+// 然后你可以保持简洁的 barrel 导入：
 import { Check, X, Menu } from 'lucide-react'
-// Automatically transformed to direct imports at build time
+// 自动转换为直接导入在构建时
 ```
 
-Direct imports provide 15-70% faster dev boot, 28% faster builds, 40% faster cold starts, and significantly faster HMR.
+直接导入提供 15-70% 更快的开发启动，28% 更快的构建，40% 更快的冷启动，以及显著更快的 HMR。
 
-Libraries commonly affected: `lucide-react`, `@mui/material`, `@mui/icons-material`, `@tabler/icons-react`, `react-icons`, `@headlessui/react`, `@radix-ui/react-*`, `lodash`, `ramda`, `date-fns`, `rxjs`, `react-use`.
+受影响的库：`lucide-react`, `@mui/material`, `@mui/icons-material`, `@tabler/icons-react`, `react-icons`, `@headlessui/react`, `@radix-ui/react-*`, `lodash`, `ramda`, `date-fns`, `rxjs`, `react-use`。
 
-Reference: [https://vercel.com/blog/how-we-optimized-package-imports-in-next-js](https://vercel.com/blog/how-we-optimized-package-imports-in-next-js)
+参考：[https://vercel.com/blog/how-we-optimized-package-imports-in-next-js](https://vercel.com/blog/how-we-optimized-package-imports-in-next-js)
 
-### 2.2 Conditional Module Loading
+### 2.2 条件模块加载
 
-**Impact: HIGH (loads large data only when needed)**
+**影响：高 (仅在需要时加载大型数据)**
 
-Load large data or modules only when a feature is activated.
+仅在特征激活时加载大型数据或模块。
 
-**Example: lazy-load animation frames**
+**例子：懒加载动画帧**
 
 ```tsx
 function AnimationPlayer({ enabled, setEnabled }: { enabled: boolean; setEnabled: React.Dispatch<React.SetStateAction<boolean>> }) {
@@ -461,15 +459,15 @@ function AnimationPlayer({ enabled, setEnabled }: { enabled: boolean; setEnabled
 }
 ```
 
-The `typeof window !== 'undefined'` check prevents bundling this module for SSR, optimizing server bundle size and build speed.
+`typeof window !== 'undefined'` 检查防止在 SSR 中捆绑此模块，优化服务器包大小和构建速度。
 
-### 2.3 Defer Non-Critical Third-Party Libraries
+### 2.3 延后加载非关键三方库
 
-**Impact: MEDIUM (loads after hydration)**
+**影响：中 (在水合后加载)**
 
-Analytics, logging, and error tracking don't block user interaction. Load them after hydration.
+分析、日志、错误跟踪不会阻塞用户交互。在水合后加载。
 
-**Incorrect: blocks initial bundle**
+**错误：阻塞初始包**
 
 ```tsx
 import { Analytics } from '@vercel/analytics/react'
@@ -486,7 +484,7 @@ export default function RootLayout({ children }) {
 }
 ```
 
-**Correct: loads after hydration**
+**正确：在水合后加载**
 
 ```tsx
 import dynamic from 'next/dynamic'
@@ -508,13 +506,13 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 2.4 Dynamic Imports for Heavy Components
+### 2.4 重组件用动态导入
 
-**Impact: CRITICAL (directly affects TTI and LCP)**
+**影响：致命 (直接影响 TTI 和 LCP)**
 
-Use `next/dynamic` to lazy-load large components not needed on initial render.
+使用 `next/dynamic` 来懒加载大型组件，不需要在初始渲染时加载。
 
-**Incorrect: Monaco bundles with main chunk ~300KB**
+**错误：Monaco 与主包 ~300KB**
 
 ```tsx
 import { MonacoEditor } from './monaco-editor'
@@ -524,7 +522,7 @@ function CodePanel({ code }: { code: string }) {
 }
 ```
 
-**Correct: Monaco loads on demand**
+**正确：Monaco 按需加载**
 
 ```tsx
 import dynamic from 'next/dynamic'
@@ -539,13 +537,13 @@ function CodePanel({ code }: { code: string }) {
 }
 ```
 
-### 2.5 Preload Based on User Intent
+### 2.5 基于用户意图预加载
 
-**Impact: MEDIUM (reduces perceived latency)**
+**影响：中 (减少感知延迟)**
 
-Preload heavy bundles before they're needed to reduce perceived latency.
+在需要之前预加载重包，以减少感知延迟。
 
-**Example: preload on hover/focus**
+**例子：在 hover/focus 时预加载**
 
 ```tsx
 function EditorButton({ onClick }: { onClick: () => void }) {
@@ -567,7 +565,7 @@ function EditorButton({ onClick }: { onClick: () => void }) {
 }
 ```
 
-**Example: preload when feature flag is enabled**
+**例子：当特征标志启用时预加载**
 
 ```tsx
 function FlagsProvider({ children, flags }: Props) {
@@ -583,37 +581,37 @@ function FlagsProvider({ children, flags }: Props) {
 }
 ```
 
-The `typeof window !== 'undefined'` check prevents bundling preloaded modules for SSR, optimizing server bundle size and build speed.
+`typeof window !== 'undefined'` 检查防止在 SSR 中捆绑预加载模块，优化服务器包大小和构建速度。
 
 ---
 
-## 3. Server-Side Performance
+## 3. 服务端性能
 
-**Impact: HIGH**
+**影响：高**
 
-Optimizing server-side rendering and data fetching eliminates server-side waterfalls and reduces response times.
+优化服务端渲染和数据获取消除了服务端瀑布链并减少了响应时间。
 
-### 3.1 Authenticate Server Actions Like API Routes
+### 3.1 服务端操作需鉴权
 
-**Impact: CRITICAL (prevents unauthorized access to server mutations)**
+**影响：致命 (防止未经授权访问服务器突变)**
 
-Server Actions (functions with `"use server"`) are exposed as public endpoints, just like API routes. Always verify authentication and authorization **inside** each Server Action—do not rely solely on middleware, layout guards, or page-level checks, as Server Actions can be invoked directly.
+服务端操作（带有 `"use server"` 的函数）是公开端点，就像 API 路由一样。总是验证认证和授权 **在每个服务端操作内部**—不要仅依赖于中间件、布局守卫或页面级检查，因为服务端操作可以被直接调用。
 
-Next.js documentation explicitly states: "Treat Server Actions with the same security considerations as public-facing API endpoints, and verify if the user is allowed to perform a mutation."
+Next.js 文档明确指出：“将服务端操作与公开端点的相同安全考虑，验证用户是否允许执行突变。”
 
-**Incorrect: no authentication check**
+**错误：没有认证检查**
 
 ```typescript
 'use server'
 
 export async function deleteUser(userId: string) {
-  // Anyone can call this! No auth check
+  // 任何人都可以调用这个！没有认证检查
   await db.user.delete({ where: { id: userId } })
   return { success: true }
 }
 ```
 
-**Correct: authentication inside the action**
+**正确：在操作内部认证**
 
 ```typescript
 'use server'
@@ -622,14 +620,14 @@ import { verifySession } from '@/lib/auth'
 import { unauthorized } from '@/lib/errors'
 
 export async function deleteUser(userId: string) {
-  // Always check auth inside the action
+  // 总是检查认证
   const session = await verifySession()
   
   if (!session) {
     throw unauthorized('Must be logged in')
   }
   
-  // Check authorization too
+  // 检查授权
   if (session.user.role !== 'admin' && session.user.id !== userId) {
     throw unauthorized('Cannot delete other users')
   }
@@ -639,7 +637,7 @@ export async function deleteUser(userId: string) {
 }
 ```
 
-**With input validation:**
+**带输入验证：**
 
 ```typescript
 'use server'
@@ -654,21 +652,21 @@ const updateProfileSchema = z.object({
 })
 
 export async function updateProfile(data: unknown) {
-  // Validate input first
+  // 验证输入
   const validated = updateProfileSchema.parse(data)
   
-  // Then authenticate
+  // 然后认证
   const session = await verifySession()
   if (!session) {
     throw new Error('Unauthorized')
   }
   
-  // Then authorize
+  // 然后授权
   if (session.user.id !== validated.userId) {
     throw new Error('Can only update own profile')
   }
   
-  // Finally perform the mutation
+  // 最后执行突变
   await db.user.update({
     where: { id: validated.userId },
     data: {
@@ -681,55 +679,55 @@ export async function updateProfile(data: unknown) {
 }
 ```
 
-Reference: [https://nextjs.org/docs/app/guides/authentication](https://nextjs.org/docs/app/guides/authentication)
+参考：[https://nextjs.org/docs/app/guides/authentication](https://nextjs.org/docs/app/guides/authentication)
 
-### 3.2 Avoid Duplicate Serialization in RSC Props
+### 3.2 避免 RSC props 中的重复序列化
 
-**Impact: LOW (reduces network payload by avoiding duplicate serialization)**
+**影响：低 (减少网络负载)**
 
-RSC→client serialization deduplicates by object reference, not value. Same reference = serialized once; new reference = serialized again. Do transformations (`.toSorted()`, `.filter()`, `.map()`) in client, not server.
+RSC→client 序列化通过对象引用而不是值。相同引用 = 一次序列化；新引用 = 再次序列化。在客户端进行变换（`.toSorted()`, `.filter()`, `.map()`)，而不是在服务器端。
 
-**Incorrect: duplicates array**
+**错误：重复数组**
 
 ```tsx
-// RSC: sends 6 strings (2 arrays × 3 items)
+// RSC: 发送 6 个字符串 (2 个数组 × 3 个项目)
 <ClientList usernames={usernames} usernamesOrdered={usernames.toSorted()} />
 ```
 
-**Correct: sends 3 strings**
+**正确：发送 3 个字符串**
 
 ```tsx
-// RSC: send once
+// RSC: 发送一次
 <ClientList usernames={usernames} />
 
-// Client: transform there
+// 客户端：变换那里
 'use client'
 const sorted = useMemo(() => [...usernames].sort(), [usernames])
 ```
 
-**Nested deduplication behavior:**
+**嵌套去重行为：**
 
 ```tsx
-// string[] - duplicates everything
-usernames={['a','b']} sorted={usernames.toSorted()} // sends 4 strings
+// string[] - 复制一切
+usernames={['a','b']} sorted={usernames.toSorted()} // 发送 4 个字符串
 
-// object[] - duplicates array structure only
-users={[{id:1},{id:2}]} sorted={users.toSorted()} // sends 2 arrays + 2 unique objects (not 4)
+// object[] - 复制数组结构
+users={[{id:1},{id:2}]} sorted={users.toSorted()} // 发送 2 个数组 + 2 个唯一对象 (不是 4 个)
 ```
 
-Deduplication works recursively. Impact varies by data type:
+去重是递归的。影响因数据类型而异：
 
-- `string[]`, `number[]`, `boolean[]`: **HIGH impact** - array + all primitives fully duplicated
+- `string[]`, `number[]`, `boolean[]`: **高影响** - 数组 + 所有原始值完全复制
 
-- `object[]`: **LOW impact** - array duplicated, but nested objects deduplicated by reference
+- `object[]`: **低影响** - 数组被复制，但嵌套对象通过引用去重
 
-**Operations breaking deduplication: create new references**
+**破坏去重的行为：创建新引用**
 
-- Arrays: `.toSorted()`, `.filter()`, `.map()`, `.slice()`, `[...arr]`
+- 数组：`.toSorted()`, `.filter()`, `.map()`, `.slice()`, `[...arr]`
 
-- Objects: `{...obj}`, `Object.assign()`, `structuredClone()`, `JSON.parse(JSON.stringify())`
+- 对象：`{...obj}`, `Object.assign()`, `structuredClone()`, `JSON.parse(JSON.stringify())`
 
-**More examples:**
+**更多例子：**
 
 ```tsx
 // ❌ Bad
@@ -739,25 +737,25 @@ Deduplication works recursively. Impact varies by data type:
 // ✅ Good
 <C users={users} />
 <C product={product} />
-// Do filtering/destructuring in client
+// 在客户端进行过滤/解构
 ```
 
-**Exception:** Pass derived data when transformation is expensive or client doesn't need original.
+**例外：** 当变换是昂贵或客户端不需要原始数据时，传递派生数据。
 
-### 3.3 Cross-Request LRU Caching
+### 3.3 跨请求 LRU 缓存
 
-**Impact: HIGH (caches across requests)**
+**影响：高 (跨请求缓存)**
 
-`React.cache()` only works within one request. For data shared across sequential requests (user clicks button A then button B), use an LRU cache.
+`React.cache()` 只在单个请求内工作。对于在连续请求中共享数据的场景（用户点击按钮 A 然后点击按钮 B），使用 LRU 缓存。
 
-**Implementation:**
+**实现：**
 
 ```typescript
 import { LRUCache } from 'lru-cache'
 
 const cache = new LRUCache<string, any>({
   max: 1000,
-  ttl: 5 * 60 * 1000  // 5 minutes
+  ttl: 5 * 60 * 1000  // 5 分钟
 })
 
 export async function getUser(id: string) {
@@ -769,39 +767,39 @@ export async function getUser(id: string) {
   return user
 }
 
-// Request 1: DB query, result cached
-// Request 2: cache hit, no DB query
+// 请求 1: DB 查询，结果缓存
+// 请求 2: 缓存命中，无 DB 查询
 ```
 
-Use when sequential user actions hit multiple endpoints needing the same data within seconds.
+使用场景：用户连续点击多个端点需要相同数据。
 
-**With Vercel's [Fluid Compute](https://vercel.com/docs/fluid-compute):** LRU caching is especially effective because multiple concurrent requests can share the same function instance and cache. This means the cache persists across requests without needing external storage like Redis.
+**与 Vercel 的 [Fluid Compute](https://vercel.com/docs/fluid-compute):** LRU 缓存尤其有效，因为多个并发请求可以共享相同的函数实例和缓存。这意味着缓存持久化，无需外部存储如 Redis。
 
-**In traditional serverless:** Each invocation runs in isolation, so consider Redis for cross-process caching.
+**在传统无服务器中：** 每次调用都在隔离中运行，所以考虑 Redis 用于跨进程缓存。
 
-Reference: [https://github.com/isaacs/node-lru-cache](https://github.com/isaacs/node-lru-cache)
+参考：[https://github.com/isaacs/node-lru-cache](https://github.com/isaacs/node-lru-cache)
 
-### 3.4 Minimize Serialization at RSC Boundaries
+### 3.4 最小化 RSC 边界序列化
 
-**Impact: HIGH (reduces data transfer size)**
+**影响：高 (减少数据传输大小)**
 
-The React Server/Client boundary serializes all object properties into strings and embeds them in the HTML response and subsequent RSC requests. This serialized data directly impacts page weight and load time, so **size matters a lot**. Only pass fields that the client actually uses.
+React Server/Client 边界将所有对象属性序列化为字符串并嵌入 HTML 响应和后续 RSC 请求中。这直接影晌页面重量和加载时间，所以 **大小很重要**。只传递客户端实际使用的字段。
 
-**Incorrect: serializes all 50 fields**
+**错误：序列化所有 50 个字段**
 
 ```tsx
 async function Page() {
-  const user = await fetchUser()  // 50 fields
+  const user = await fetchUser()  // 50 个字段
   return <Profile user={user} />
 }
 
 'use client'
 function Profile({ user }: { user: User }) {
-  return <div>{user.name}</div>  // uses 1 field
+  return <div>{user.name}</div>  // 使用 1 个字段
 }
 ```
 
-**Correct: serializes only 1 field**
+**正确：只序列化 1 个字段**
 
 ```tsx
 async function Page() {
@@ -815,13 +813,13 @@ function Profile({ name }: { name: string }) {
 }
 ```
 
-### 3.5 Parallel Data Fetching with Component Composition
+### 3.5 并行数据获取与组件组合
 
-**Impact: CRITICAL (eliminates server-side waterfalls)**
+**影响：致命 (消除服务端瀑布链)**
 
-React Server Components execute sequentially within a tree. Restructure with composition to parallelize data fetching.
+React Server Components 在树内执行顺序。重构为组合以并行化数据获取。
 
-**Incorrect: Sidebar waits for Page's fetch to complete**
+**错误：Sidebar 等待 Page 的 fetch 完成**
 
 ```tsx
 export default async function Page() {
@@ -840,7 +838,7 @@ async function Sidebar() {
 }
 ```
 
-**Correct: both fetch simultaneously**
+**正确：同时获取**
 
 ```tsx
 async function Header() {
@@ -863,7 +861,7 @@ export default function Page() {
 }
 ```
 
-**Alternative with children prop:**
+**带 children prop 的替代方案：**
 
 ```tsx
 async function Header() {
@@ -894,13 +892,13 @@ export default function Page() {
 }
 ```
 
-### 3.6 Per-Request Deduplication with React.cache()
+### 3.6 React.cache() 单请求去重
 
-**Impact: MEDIUM (deduplicates within request)**
+**影响：中 (请求内去重)**
 
-Use `React.cache()` for server-side request deduplication. Authentication and database queries benefit most.
+使用 `React.cache()` 进行服务端请求去重。认证和数据库查询受益最多。
 
-**Usage:**
+**用法：**
 
 ```typescript
 import { cache } from 'react'
@@ -914,68 +912,68 @@ export const getCurrentUser = cache(async () => {
 })
 ```
 
-Within a single request, multiple calls to `getCurrentUser()` execute the query only once.
+在单个请求内，多次调用 `getCurrentUser()` 执行查询仅一次。
 
-**Avoid inline objects as arguments:**
+**避免 inline objects 作为参数：**
 
-`React.cache()` uses shallow equality (`Object.is`) to determine cache hits. Inline objects create new references each call, preventing cache hits.
+`React.cache()` 使用浅等性 (`Object.is`) 来确定缓存命中。inline objects 创建新引用每次调用，防止缓存命中。
 
-**Incorrect: always cache miss**
+**错误：总是缓存未命中**
 
 ```typescript
 const getUser = cache(async (params: { uid: number }) => {
   return await db.user.findUnique({ where: { id: params.uid } })
 })
 
-// Each call creates new object, never hits cache
+// 每次调用创建新对象，从未命中缓存
 getUser({ uid: 1 })
-getUser({ uid: 1 })  // Cache miss, runs query again
+getUser({ uid: 1 })  // 缓存未命中，再次运行查询
 ```
 
-**Correct: cache hit**
+**正确：缓存命中**
 
 ```typescript
 const params = { uid: 1 }
-getUser(params)  // Query runs
-getUser(params)  // Cache hit (same reference)
+getUser(params)  // 查询运行
+getUser(params)  // 缓存命中 (相同引用)
 ```
 
-If you must pass objects, pass the same reference:
+如果必须传递对象，传递相同的引用：
 
 **Next.js-Specific Note:**
 
-In Next.js, the `fetch` API is automatically extended with request memoization. Requests with the same URL and options are automatically deduplicated within a single request, so you don't need `React.cache()` for `fetch` calls. However, `React.cache()` is still essential for other async tasks:
+在 Next.js 中，`fetch` API 自动扩展为请求记忆化。具有相同 URL 和选项的请求在单个请求内自动去重，所以你不需要 `React.cache()` 对 `fetch` 调用。然而，`React.cache()` 仍然对其他异步任务至关重要：
 
-- Database queries (Prisma, Drizzle, etc.)
+- 数据库查询 (Prisma, Drizzle, 等)
 
-- Heavy computations
+- 重计算
 
-- Authentication checks
+- 认证检查
 
-- File system operations
+- 文件系统操作
 
-- Any non-fetch async work
+- 任何非-fetch 异步工作
 
-Use `React.cache()` to deduplicate these operations across your component tree.
+使用 `React.cache()` 来去重这些操作。
 
-Reference: [https://react.dev/reference/react/cache](https://react.dev/reference/react/cache)
+参考：[https://react.dev/reference/react/cache](https://react.dev/reference/react/cache)
 
-### 3.7 Use after() for Non-Blocking Operations
+### 3.7 使用 after() 非阻塞操作
 
-**Impact: MEDIUM (faster response times)**
+**影响：中 (更快的响应时间)**
 
-Use Next.js's `after()` to schedule work that should execute after a response is sent. This prevents logging, analytics, and other side effects from blocking the response.
+使用 Next.js 的 `after()` 来调度应在响应发送后执行的工作。这防止了日志、分析和其他副作用阻塞响应。
 
-**Incorrect: blocks response**
+**错误：阻塞响应**
 
 ```tsx
 import { logUserAction } from '@/app/utils'
 
 export async function POST(request: Request) {
-  // Perform mutation
+  // 执行突变
   await updateDatabase(request)
   
-  // Logging blocks the response
+  // 日志阻塞响应
   const userAgent = request.headers.get('user-agent') || 'unknown'
   await logUserAction({ userAgent })
   
@@ -986,7 +984,7 @@ export async function POST(request: Request) {
 }
 ```
 
-**Correct: non-blocking**
+**正确：非阻塞**
 
 ```tsx
 import { after } from 'next/server'
@@ -994,10 +992,10 @@ import { headers, cookies } from 'next/headers'
 import { logUserAction } from '@/app/utils'
 
 export async function POST(request: Request) {
-  // Perform mutation
+  // 执行突变
   await updateDatabase(request)
   
-  // Log after response is sent
+  // 日志在响应发送后
   after(async () => {
     const userAgent = (await headers()).get('user-agent') || 'unknown'
     const sessionCookie = (await cookies()).get('session-id')?.value || 'anonymous'
@@ -1012,43 +1010,43 @@ export async function POST(request: Request) {
 }
 ```
 
-The response is sent immediately while logging happens in the background.
+响应立即发送，而日志在后台发生。
 
-**Common use cases:**
+**常见用例：**
 
-- Analytics tracking
+- 分析跟踪
 
-- Audit logging
+- 审计日志
 
-- Sending notifications
+- 发送通知
 
-- Cache invalidation
+- 缓存无效化
 
-- Cleanup tasks
+- 清理任务
 
-**Important notes:**
+**重要笔记：**
 
-- `after()` runs even if the response fails or redirects
+- `after()` 即使响应失败或重定向也会运行
 
-- Works in Server Actions, Route Handlers, and Server Components
+- 在 Server Actions、Route Handlers、Server Components 中运行
 
-Reference: [https://nextjs.org/docs/app/api-reference/functions/after](https://nextjs.org/docs/app/api-reference/functions/after)
+参考：[https://nextjs.org/docs/app/api-reference/functions/after](https://nextjs.org/docs/app/api-reference/functions/after)
 
 ---
 
-## 4. Client-Side Data Fetching
+## 4. 客户端数据获取
 
-**Impact: MEDIUM-HIGH**
+**影响：中高**
 
-Automatic deduplication and efficient data fetching patterns reduce redundant network requests.
+自动去重和高效的获取模式减少了冗余网络请求。
 
-### 4.1 Deduplicate Global Event Listeners
+### 4.1 去重全局事件监听
 
-**Impact: LOW (single listener for N components)**
+**影响：低 (单监听器为 N 组件)**
 
-Use `useSWRSubscription()` to share global event listeners across component instances.
+使用 `useSWRSubscription()` 在组件实例之间共享全局事件监听器。
 
-**Incorrect: N instances = N listeners**
+**错误：N 实例 = N 监听器**
 
 ```tsx
 function useKeyboardShortcut(key: string, callback: () => void) {
@@ -1064,18 +1062,18 @@ function useKeyboardShortcut(key: string, callback: () => void) {
 }
 ```
 
-When using the `useKeyboardShortcut` hook multiple times, each instance will register a new listener.
+当使用 `useKeyboardShortcut` 多次时，每个实例会注册一个新监听器。
 
-**Correct: N instances = 1 listener**
+**正确：N 实例 = 1 监听器**
 
 ```tsx
 import useSWRSubscription from 'swr/subscription'
 
-// Module-level Map to track callbacks per key
+// 模块级 Map 跟踪每个键的回调
 const keyCallbacks = new Map<string, Set<() => void>>()
 
 function useKeyboardShortcut(key: string, callback: () => void) {
-  // Register this callback in the Map
+  // 注册这个回调在 Map 中
   useEffect(() => {
     if (!keyCallbacks.has(key)) {
       keyCallbacks.set(key, new Set())
@@ -1105,20 +1103,20 @@ function useKeyboardShortcut(key: string, callback: () => void) {
 }
 
 function Profile() {
-  // Multiple shortcuts will share the same listener
+  // 多个快捷键共享同一个监听器
   useKeyboardShortcut('p', () => { /* ... */ }) 
   useKeyboardShortcut('k', () => { /* ... */ })
   // ...
 }
 ```
 
-### 4.2 Use Passive Event Listeners for Scrolling Performance
+### 4.2 使用 passive 监听器用于滚动性能
 
-**Impact: MEDIUM (eliminates scroll delay caused by event listeners)**
+**影响：中 (消除滚动延迟造成的事件监听器)**
 
-Add `{ passive: true }` to touch and wheel event listeners to enable immediate scrolling. Browsers normally wait for listeners to finish to check if `preventDefault()` is called, causing scroll delay.
+添加 `{ passive: true }` 到触摸和轮盘事件监听器，以启用立即滚动。浏览器通常会等待监听器完成以检查 `preventDefault()` 是否被调用，导致滚动延迟。
 
-**Incorrect:**
+**错误：**
 
 ```typescript
 useEffect(() => {
@@ -1135,7 +1133,7 @@ useEffect(() => {
 }, [])
 ```
 
-**Correct:**
+**正确：**
 
 ```typescript
 useEffect(() => {
@@ -1152,17 +1150,17 @@ useEffect(() => {
 }, [])
 ```
 
-**Use passive when:** tracking/analytics, logging, any listener that doesn't call `preventDefault()`.
+**使用 passive 当：** 跟踪/分析、日志、任何不调用 `preventDefault()` 的监听器。
 
-**Don't use passive when:** implementing custom swipe gestures, custom zoom controls, or any listener that needs `preventDefault()`.
+**不要使用 passive 当：** 实现自定义的滑动手势、自定义的缩放控制、或任何需要 `preventDefault()` 的监听器。
 
-### 4.3 Use SWR for Automatic Deduplication
+### 4.3 使用 SWR 进行自动去重
 
-**Impact: MEDIUM-HIGH (automatic deduplication)**
+**影响：中高 (自动去重)**
 
-SWR enables request deduplication, caching, and revalidation across component instances.
+SWR 启用请求去重、缓存和重新验证。
 
-**Incorrect: no deduplication, each instance fetches**
+**错误：没有去重，每个实例都获取**
 
 ```tsx
 function UserList() {
@@ -1175,7 +1173,7 @@ function UserList() {
 }
 ```
 
-**Correct: multiple instances share one request**
+**正确：多个实例共享一个请求**
 
 ```tsx
 import useSWR from 'swr'
@@ -1185,7 +1183,7 @@ function UserList() {
 }
 ```
 
-**For immutable data:**
+**对于不可变数据：**
 
 ```tsx
 import { useImmutableSWR } from '@/lib/swr'
@@ -1195,7 +1193,7 @@ function StaticContent() {
 }
 ```
 
-**For mutations:**
+**对于突变：**
 
 ```tsx
 import { useSWRMutation } from 'swr/mutation'
@@ -1206,23 +1204,23 @@ function UpdateButton() {
 }
 ```
 
-Reference: [https://swr.vercel.app](https://swr.vercel.app)
+参考：[https://swr.vercel.app](https://swr.vercel.app)
 
-### 4.4 Version and Minimize localStorage Data
+### 4.4 版本化和最小化 localStorage 数据
 
-**Impact: MEDIUM (prevents schema conflicts, reduces storage size)**
+**影响：中 (防止 schema 冲突，减少存储大小)**
 
-Add version prefix to keys and store only needed fields. Prevents schema conflicts and accidental storage of sensitive data.
+添加版本前缀到键名并只存储需要的字段。防止 schema 冲突和意外存储敏感数据。
 
-**Incorrect:**
+**错误：**
 
 ```typescript
-// No version, stores everything, no error handling
+// 没有版本，存储了所有内容，没有错误处理
 localStorage.setItem('userConfig', JSON.stringify(fullUserObject))
 const data = localStorage.getItem('userConfig')
 ```
 
-**Correct:**
+**正确：**
 
 ```typescript
 const VERSION = 'v2'
@@ -1244,7 +1242,7 @@ function loadConfig() {
   }
 }
 
-// Migration from v1 to v2
+// 迁移从 v1 到 v2
 function migrate() {
   try {
     const v1 = localStorage.getItem('userConfig:v1')
@@ -1257,10 +1255,10 @@ function migrate() {
 }
 ```
 
-**Store minimal fields from server responses:**
+**从服务器响应中存储最小字段：**
 
 ```typescript
-// User object has 20+ fields, only store what UI needs
+// 用户对象有 20+ 字段，只存储 UI 需要的
 function cachePrefs(user: FullUser) {
   try {
     localStorage.setItem('prefs:v1', JSON.stringify({
@@ -1271,25 +1269,25 @@ function cachePrefs(user: FullUser) {
 }
 ```
 
-**Always wrap in try-catch:** `getItem()` and `setItem()` throw in incognito/private browsing (Safari, Firefox), when quota exceeded, or when disabled.
+**总是用 try-catch 包裹：** `getItem()` 和 `setItem()` 在 incognito/private 浏览器中会抛出错误（Safari, Firefox），当 quota 超过或禁用时。
 
-**Benefits:** Schema evolution via versioning, reduced storage size, prevents storing tokens/PII/internal flags.
+**好处：** Schema 演进通过版本化，减少存储大小，防止存储令牌/PII/内部标志。
 
 ---
 
-## 5. Re-render Optimization
+## 5. 重渲染优化
 
-**Impact: MEDIUM**
+**影响：中**
 
-Reducing unnecessary re-renders minimizes wasted computation and improves UI responsiveness.
+减少不必要的重渲染可以最小化浪费的计算和提高 UI 响应性。
 
-### 5.1 Calculate Derived State During Rendering
+### 5.1 渲染时派生状态
 
-**Impact: MEDIUM (avoids redundant renders and state drift)**
+**影响：中 (避免冗余渲染和状态漂移)**
 
-If a value can be computed from current props/state, do not store it in state or update it in an effect. Derive it during render to avoid extra renders and state drift. Do not set state in effects solely in response to prop changes; prefer derived values or keyed resets instead.
+如果一个值可以从当前 props/state 计算出来，不要存储在 state 或 effect 中。派生它在渲染时，避免额外的渲染和状态漂移。不要在 effect 中仅响应 prop 变化；优先使用派生值或键重置。
 
-**Incorrect: redundant state and effect**
+**错误：冗余状态和 effect**
 
 ```tsx
 function Form() {
@@ -1305,7 +1303,7 @@ function Form() {
 }
 ```
 
-**Correct: derive during render**
+**正确：派生期间**
 
 ```tsx
 function Form() {
@@ -1317,15 +1315,15 @@ function Form() {
 }
 ```
 
-Reference: [https://react.dev/learn/you-might-not-need-an-effect](https://react.dev/learn/you-might-not-need-an-effect)
+参考：[https://react.dev/learn/you-might-not-need-an-effect](https://react.dev/learn/you-might-not-need-an-effect)
 
-### 5.2 Defer State Reads to Usage Point
+### 5.2 延迟读取状态到使用点
 
-**Impact: MEDIUM (avoids unnecessary subscriptions)**
+**影响：中 (避免不必要的订阅)**
 
-Don't subscribe to dynamic state (searchParams, localStorage) if you only read it inside callbacks.
+不要订阅动态状态（searchParams, localStorage）如果只在回调中读取。
 
-**Incorrect: subscribes to all searchParams changes**
+**错误：订阅所有 searchParams 变化**
 
 ```tsx
 function ShareButton({ chatId }: { chatId: string }) {
@@ -1340,7 +1338,7 @@ function ShareButton({ chatId }: { chatId: string }) {
 }
 ```
 
-**Correct: reads on demand, no subscription**
+**正确：按需读取，无订阅**
 
 ```tsx
 function ShareButton({ chatId }: { chatId: string }) {
@@ -1354,15 +1352,15 @@ function ShareButton({ chatId }: { chatId: string }) {
 }
 ```
 
-### 5.3 Do not wrap a simple expression with a primitive result type in useMemo
+### 5.3 不要将简单表达式用 primitive 结果类型包裹在 useMemo 中
 
-**Impact: LOW-MEDIUM (wasted computation on every render)**
+**影响：低-中 (浪费每次渲染的计算)**
 
-When an expression is simple (few logical or arithmetical operators) and has a primitive result type (boolean, number, string), do not wrap it in `useMemo`.
+当表达式是简单的（少数逻辑或算术运算）且有 primitive 结果类型（布尔、数字、字符串）时，不要用 `useMemo` 包裹。
 
-Calling `useMemo` and comparing hook dependencies may consume more resources than the expression itself.
+调用 `useMemo` 和比较 hook 依赖可能会消耗比表达式本身更多的资源。
 
-**Incorrect:**
+**错误：**
 
 ```tsx
 function Header({ user, notifications }: Props) {
@@ -1375,7 +1373,7 @@ function Header({ user, notifications }: Props) {
 }
 ```
 
-**Correct:**
+**正确：**
 
 ```tsx
 function Header({ user, notifications }: Props) {
@@ -1386,26 +1384,26 @@ function Header({ user, notifications }: Props) {
 }
 ```
 
-### 5.4 Extract Default Non-primitive Parameter Value from Memoized Component to Constant
+### 5.4 提取默认非原始参数值为常量
 
-**Impact: MEDIUM (restores memoization by using a constant for default value)**
+**影响：中 (恢复 memoization 用常量代替默认值)**
 
-When memoized component has a default value for some non-primitive optional parameter, such as an array, function, or object, calling the component without that parameter results in broken memoization. This is because new value instances are created on every rerender, and they do not pass strict equality comparison in `memo()`.
+当 memoized 组件有某些非原始可选参数的默认值，如数组、函数或对象时，不带该参数调用组件会导致 memoization 失败。这是因为每次重新渲染都会创建新实例，而它们不会通过 `memo()` 的严格相等比较。
 
-To address this issue, extract the default value into a constant.
+为了解决这个问题，提取默认值为常量。
 
-**Incorrect: `onClick` has different values on every rerender**
+**错误：`onClick` 在每次重新渲染时值不同**
 
 ```tsx
 const UserAvatar = memo(function UserAvatar({ onClick = () => {} }: { onClick?: () => void }) {
   // ...
 })
 
-// Used without optional onClick
+// 用于没有 optional onClick
 <UserAvatar />
 ```
 
-**Correct: stable default value**
+**正确：稳定默认值**
 
 ```tsx
 const NOOP = () => {};
@@ -1414,17 +1412,17 @@ const UserAvatar = memo(function UserAvatar({ onClick = NOOP }: { onClick?: () =
   // ...
 })
 
-// Used without optional onClick
+// 用于没有 optional onClick
 <UserAvatar />
 ```
 
-### 5.5 Extract to Memoized Components
+### 5.5 提取为 memo 组件
 
-**Impact: MEDIUM (enables early returns)**
+**影响：中 (启用早期返回)**
 
-Extract expensive work into memoized components to enable early returns before computation.
+将昂贵的工作提取为 memo 组件，以在计算前启用早期返回。
 
-**Incorrect: computes avatar even when loading**
+**错误：计算 avatar 即使在加载时**
 
 ```tsx
 function Profile({ user, loading }: Props) {
@@ -1438,7 +1436,7 @@ function Profile({ user, loading }: Props) {
 }
 ```
 
-**Correct: skips computation when loading**
+**正确：加载时跳过计算**
 
 ```tsx
 const UserAvatar = memo(function UserAvatar({ user }: { user: User }) {
@@ -1456,15 +1454,15 @@ function Profile({ user, loading }: Props) {
 }
 ```
 
-**Note:** If your project has [React Compiler](https://react.dev/learn/react-compiler) enabled, manual memoization with `memo()` and `useMemo()` is not necessary. The compiler automatically optimizes re-renders.
+**注意：** 如果你的项目有 [React Compiler](https://react.dev/learn/react-compiler) 启用，手动 memoization 用 `memo()` 和 `useMemo()` 不是必要的。编译器自动优化重新渲染。
 
-### 5.6 Narrow Effect Dependencies
+### 5.6 缩小 effect 依赖范围
 
-**Impact: LOW (minimizes effect re-runs)**
+**影响：低 (最小化 effect 重新运行)**
 
-Specify primitive dependencies instead of objects to minimize effect re-runs.
+指定原始依赖而不是对象，以最小化 effect 重新运行。
 
-**Incorrect: re-runs on any user field change**
+**错误：任何用户字段变化都重新运行**
 
 ```tsx
 useEffect(() => {
@@ -1472,7 +1470,7 @@ useEffect(() => {
 }, [user])
 ```
 
-**Correct: re-runs only when id changes**
+**正确：仅当 id 变化时重新运行**
 
 ```tsx
 useEffect(() => {
@@ -1480,17 +1478,17 @@ useEffect(() => {
 }, [user.id])
 ```
 
-**For derived state, compute outside effect:**
+**对于派生状态，计算在 effect 外：**
 
 ```tsx
-// Incorrect: runs on width=767, 766, 765...
+// 错误：在 width=767, 766, 765...
 useEffect(() => {
   if (width < 768) {
     enableMobileMode()
   }
 }, [width])
 
-// Correct: runs only on boolean transition
+// 正确：仅在 boolean 转换时运行
 const isMobile = width < 768
 useEffect(() => {
   if (isMobile) {
@@ -1499,13 +1497,13 @@ useEffect(() => {
 }, [isMobile])
 ```
 
-### 5.7 Put Interaction Logic in Event Handlers
+### 5.7 将交互逻辑放在事件处理器中
 
-**Impact: MEDIUM (avoids effect re-runs and duplicate side effects)**
+**影响：中 (避免 effect 重新运行和重复副作用)**
 
-If a side effect is triggered by a specific user action (submit, click, drag), run it in that event handler. Do not model the action as state + effect; it makes effects re-run on unrelated changes and can duplicate the action.
+如果一个副作用是由特定用户操作（提交、点击、拖拽）触发的，就在那个事件处理器中运行它。不要将动作建模为 state + effect；这会使 effect 在无关变化上重新运行并可能重复动作。
 
-**Incorrect: event modeled as state + effect**
+**错误：事件建模为 state + effect**
 
 ```tsx
 function Form() {
@@ -1523,7 +1521,7 @@ function Form() {
 }
 ```
 
-**Correct: do it in the handler**
+**正确：在处理器中执行**
 
 ```tsx
 function Form() {
@@ -1538,25 +1536,25 @@ function Form() {
 }
 ```
 
-Reference: [https://react.dev/learn/removing-effect-dependencies#should-this-code-move-to-an-event-handler](https://react.dev/learn/removing-effect-dependencies#should-this-code-move-to-an-event-handler)
+参考：[https://react.dev/learn/removing-effect-dependencies#should-this-code-move-to-an-event-handler](https://react.dev/learn/removing-effect-dependencies#should-this-code-move-to-an-event-handler)
 
-### 5.8 Subscribe to Derived State
+### 5.8 订阅派生状态
 
-**Impact: MEDIUM (reduces re-render frequency)**
+**影响：中 (减少重渲染频率)**
 
-Subscribe to derived boolean state instead of continuous values to reduce re-render frequency.
+订阅派生布尔状态而不是连续值，以减少重渲染频率。
 
-**Incorrect: re-renders on every pixel change**
+**错误：每像素变化都重新渲染**
 
 ```tsx
 function Sidebar() {
-  const width = useWindowWidth()  // updates continuously
+  const width = useWindowWidth()  // 更新连续
   const isMobile = width < 768
   return <nav className={isMobile ? 'mobile' : 'desktop'} />
 }
 ```
 
-**Correct: re-renders only when boolean changes**
+**正确：仅当布尔值变化时重新渲染**
 
 ```tsx
 function Sidebar() {
@@ -1565,55 +1563,55 @@ function Sidebar() {
 }
 ```
 
-### 5.9 Use Functional setState Updates
+### 5.9 使用函数式 setState 更新
 
-**Impact: MEDIUM (prevents stale closures and unnecessary callback recreations)**
+**影响：中 (防止 stale closures 和不必要的 callback 重建)**
 
-When updating state based on the current state value, use the functional update form of setState instead of directly referencing the state variable. This prevents stale closures, eliminates unnecessary dependencies, and creates stable callback references.
+当基于当前状态值更新状态时，使用 setState 的函数式更新形式，而不是直接引用状态变量。这防止了 stale closures，消除了不必要的依赖，创建了稳定的 callback 参考。
 
-**Incorrect: requires state as dependency**
+**错误：需要 state 作为依赖**
 
 ```tsx
 function TodoList() {
   const [items, setItems] = useState(initialItems)
   
-  // Callback must depend on items, recreated on every items change
+  // Callback 必须依赖 items，每次 items 变化都会重建
   const addItems = useCallback((newItems: Item[]) => {
     setItems([...items, ...newItems])
-  }, [items])  // ❌ items dependency causes recreations
+  }, [items])  // ❌ items 依赖导致重建
   
-  // Risk of stale closure if dependency is forgotten
+  // stale closure 风险
   const removeItem = useCallback((id: string) => {
     setItems(items.filter(item => item.id !== id))
-  }, [])  // ❌ Missing items dependency - will use stale items!
+  }, [])  // ❌ 缺少 items 依赖 - 会使用 stale items!
   
   return <ItemsEditor items={items} onAdd={addItems} onRemove={removeItem} />
 }
 ```
 
-The first callback is recreated every time `items` changes, which can cause child components to re-render unnecessarily. The second callback has a stale closure bug—it will always reference the initial `items` value.
+第一个回调每次 `items` 变化都会重建，这可能导致子组件不必要的重新渲染。第二个回调有 stale closure 问题——它总是引用初始 `items` 值。
 
-**Correct: stable callbacks, no stale closures**
+**正确：稳定回调，无 stale closures**
 
 ```tsx
 function TodoList() {
   const [items, setItems] = useState(initialItems)
   
-  // Stable callback, never recreated
+  // 稳定回调，永不重建
   const addItems = useCallback((newItems: Item[]) => {
     setItems(curr => [...curr, ...newItems])
-  }, [])  // ✅ No dependencies needed
+  }, [])  // ✅ 无依赖
   
-  // Always uses latest state, no stale closure risk
+  // 总是使用最新状态，无 stale closure 风险
   const removeItem = useCallback((id: string) => {
     setItems(curr => curr.filter(item => item.id !== id))
-  }, [])  // ✅ Safe and stable
+  }, [])  // ✅ 安全且稳定
   
   return <ItemsEditor items={items} onAdd={addItems} onRemove={removeItem} />
 }
 ```
 
-**Benefits:**
+**好处：**
 
 1. **Stable callback references** - Callbacks don't need to be recreated when state changes
 
@@ -1623,46 +1621,46 @@ function TodoList() {
 
 4. **Prevents bugs** - Eliminates the most common source of React closure bugs
 
-**When to use functional updates:**
+**何时使用函数式更新：**
 
-- Any setState that depends on the current state value
+- 任何 setState 依赖于当前状态值
 
-- Inside useCallback/useMemo when state is needed
+- 在 useCallback/useMemo 中需要 state
 
-- Event handlers that reference state
+- 事件处理器引用 state
 
-- Async operations that update state
+- 异步操作更新 state
 
-**When direct updates are fine:**
+**何时直接更新是合适的：**
 
-- Setting state to a static value: `setCount(0)`
+- 设置 state 为静态值：`setCount(0)`
 
-- Setting state from props/arguments only: `setName(newName)`
+- 设置 state 从 props/arguments 仅：`setName(newName)`
 
-- State doesn't depend on previous value
+- State 不依赖于前一个值
 
-**Note:** If your project has [React Compiler](https://react.dev/learn/react-compiler) enabled, the compiler can automatically optimize some cases, but functional updates are still recommended for correctness and to prevent stale closure bugs.
+**注意：** 如果你的项目有 [React Compiler](https://react.dev/learn/react-compiler) 启用，编译器可以自动优化一些情况，但函数式更新仍然是推荐的，以确保正确性和防止 stale closure bugs。
 
-### 5.10 Use Lazy State Initialization
+### 5.10 使用 Lazy State 初始化
 
-**Impact: MEDIUM (wasted computation on every render)**
+**影响：中 (浪费每次渲染的计算)**
 
-Pass a function to `useState` for expensive initial values. Without the function form, the initializer runs on every render even though the value is only used once.
+将函数传递给 `useState` 用于昂贵的初始值。没有函数形式，初始化器在每次渲染时都会运行，即使值只使用一次。
 
-**Incorrect: runs on every render**
+**错误：每次渲染都运行**
 
 ```tsx
 function FilteredList({ items }: { items: Item[] }) {
-  // buildSearchIndex() runs on EVERY render, even after initialization
+  // buildSearchIndex() 在每次渲染时都运行，即使初始化后
   const [searchIndex, setSearchIndex] = useState(buildSearchIndex(items))
   const [query, setQuery] = useState('')
   
-  // When query changes, buildSearchIndex runs again unnecessarily
+  // 当 query 变化时，buildSearchIndex 会再次运行
   return <SearchResults index={searchIndex} query={query} />
 }
 
 function UserProfile() {
-  // JSON.parse runs on every render
+  // JSON.parse 在每次渲染时都运行
   const [settings, setSettings] = useState(
     JSON.parse(localStorage.getItem('settings') || '{}')
   )
@@ -1671,11 +1669,11 @@ function UserProfile() {
 }
 ```
 
-**Correct: runs only once**
+**正确：仅运行一次**
 
 ```tsx
 function FilteredList({ items }: { items: Item[] }) {
-  // buildSearchIndex() runs ONLY on initial render
+  // buildSearchIndex() 仅在初始渲染时运行
   const [searchIndex, setSearchIndex] = useState(() => buildSearchIndex(items))
   const [query, setQuery] = useState('')
   
@@ -1683,7 +1681,7 @@ function FilteredList({ items }: { items: Item[] }) {
 }
 
 function UserProfile() {
-  // JSON.parse runs only on initial render
+  // JSON.parse 仅在初始渲染时运行
   const [settings, setSettings] = useState(() => {
     const stored = localStorage.getItem('settings')
     return stored ? JSON.parse(stored) : {}
@@ -1693,17 +1691,17 @@ function UserProfile() {
 }
 ```
 
-Use lazy initialization when computing initial values from localStorage/sessionStorage, building data structures (indexes, maps), reading from the DOM, or performing heavy transformations.
+使用懒初始化来计算初始值，如从 localStorage/sessionStorage、构建数据结构（索引、映射）、读取 DOM、或进行重变换。
 
-For simple primitives (`useState(0)`), direct references (`useState(props.value)`), or cheap literals (`useState({})`), the function form is unnecessary.
+对于简单原始值 (`useState(0)`), 直接引用 (`useState(props.value)`), 或便宜的字面量 (`useState({})`), 函数形式是不必要的。
 
-### 5.11 Use Transitions for Non-Urgent Updates
+### 5.11 使用 Transitions 对非紧急更新
 
-**Impact: MEDIUM (maintains UI responsiveness)**
+**影响：中 (维持 UI 响应性)**
 
-Mark frequent, non-urgent state updates as transitions to maintain UI responsiveness.
+标记频繁、非紧急状态更新为 transitions，以维持 UI 响应性。
 
-**Incorrect: blocks UI on every scroll**
+**错误：每次滚动都阻塞 UI**
 
 ```tsx
 function ScrollTracker() {
@@ -1716,7 +1714,7 @@ function ScrollTracker() {
 }
 ```
 
-**Correct: non-blocking updates**
+**正确：非阻塞更新**
 
 ```tsx
 import { startTransition } from 'react'
@@ -1733,13 +1731,13 @@ function ScrollTracker() {
 }
 ```
 
-### 5.12 Use useRef for Transient Values
+### 5.12 使用 useRef 对临时值
 
-**Impact: MEDIUM (avoids unnecessary re-renders on frequent updates)**
+**影响：中 (避免频繁更新时不必要的重渲染)**
 
-When a value changes frequently and you don't want a re-render on every update (e.g., mouse trackers, intervals, transient flags), store it in `useRef` instead of `useState`. Keep component state for UI; use refs for temporary DOM-adjacent values. Updating a ref does not trigger a re-render.
+当值频繁变化且你不想在每次更新时都重新渲染（例如，鼠标追踪器、间隔、临时标志）时，将它存入 `useRef` 而非 `useState`。保持组件状态用于 UI；使用 refs 用于临时 DOM 相邻值。更新 ref 不会触发重渲染。
 
-**Incorrect: renders every update**
+**错误：每次更新都重新渲染**
 
 ```tsx
 function Tracker() {
@@ -1766,7 +1764,7 @@ function Tracker() {
 }
 ```
 
-**Correct: no re-render for tracking**
+**正确：无重渲染**
 
 ```tsx
 function Tracker() {
@@ -1804,19 +1802,19 @@ function Tracker() {
 
 ---
 
-## 6. Rendering Performance
+## 6. 渲染性能
 
-**Impact: MEDIUM**
+**影响：中**
 
-Optimizing the rendering process reduces the work the browser needs to do.
+优化渲染过程减少浏览器需要做的工作。
 
-### 6.1 Animate SVG Wrapper Instead of SVG Element
+### 6.1 动画应包裹 div 而非 SVG 元素
 
-**Impact: LOW (enables hardware acceleration)**
+**影响：低 (启用硬件加速)**
 
-Many browsers don't have hardware acceleration for CSS3 animations on SVG elements. Wrap SVG in a `<div>` and animate the wrapper instead.
+许多浏览器没有硬件加速对 CSS3 动画在 SVG 元素上的支持。将 SVG 包裹在 `<div>` 中并动画 wrapper。
 
-**Incorrect: animating SVG directly - no hardware acceleration**
+**错误：直接动画 SVG - 无硬件加速**
 
 ```tsx
 function LoadingSpinner() {
@@ -1833,7 +1831,7 @@ function LoadingSpinner() {
 }
 ```
 
-**Correct: animating wrapper div - hardware accelerated**
+**正确：动画 wrapper div - 硬件加速**
 
 ```tsx
 function LoadingSpinner() {
@@ -1851,13 +1849,13 @@ function LoadingSpinner() {
 }
 ```
 
-This applies to all CSS transforms and transitions (`transform`, `opacity`, `translate`, `scale`, `rotate`). The wrapper div allows browsers to use GPU acceleration for smoother animations.
+这适用于所有 CSS 变换和过渡 (`transform`, `opacity`, `translate`, `scale`, `rotate`). Wrapper div 允许浏览器使用 GPU 加速进行更平滑的动画。
 
 ### 6.2 CSS content-visibility for Long Lists
 
-**Impact: HIGH (faster initial render)**
+**影响：高 (更快的初始渲染)**
 
-Apply `content-visibility: auto` to defer off-screen rendering.
+应用 `content-visibility: auto` 来延迟 off-screen 渲染。
 
 **CSS:**
 
@@ -1868,7 +1866,7 @@ Apply `content-visibility: auto` to defer off-screen rendering.
 }
 ```
 
-**Example:**
+**例子：**
 
 ```tsx
 function MessageList({ messages }: { messages: Message[] }) {
@@ -1885,15 +1883,15 @@ function MessageList({ messages }: { messages: Message[] }) {
 }
 ```
 
-For 1000 messages, browser skips layout/paint for ~990 off-screen items (10× faster initial render).
+对于 1000 条消息，浏览器跳过 ~990 个 off-screen 项目（10× 更快的初始渲染）。
 
 ### 6.3 Hoist Static JSX Elements
 
-**Impact: LOW (avoids re-creation)**
+**影响：低 (避免重新创建)**
 
-Extract static JSX outside components to avoid re-creation.
+提取静态 JSX 外部组件，避免重新创建。
 
-**Incorrect: recreates element every render**
+**错误：每次渲染都重新创建**
 
 ```tsx
 function LoadingSkeleton() {
@@ -1909,7 +1907,7 @@ function Container() {
 }
 ```
 
-**Correct: reuses same element**
+**正确：重用相同元素**
 
 ```tsx
 const loadingSkeleton = (
@@ -1925,41 +1923,41 @@ function Container() {
 }
 ```
 
-This is especially helpful for large and static SVG nodes, which can be expensive to recreate on every render.
+这尤其有助于大型和静态 SVG 节点，它们在每次渲染时都可能很昂贵。
 
-**Note:** If your project has [React Compiler](https://react.dev/learn/react-compiler) enabled, the compiler automatically hoists static JSX elements and optimizes component re-renders, making manual hoisting unnecessary.
+**注意：** 如果你的项目有 [React Compiler](https://react.dev/learn/react-compiler) 启用，编译器自动优化静态 JSX 元素和组件重新渲染，使得手动 hoisting 不必要。
 
-### 6.4 Optimize SVG Precision
+### 6.4 优化 SVG 精度
 
-**Impact: LOW (reduces file size)**
+**影响：低 (减少文件大小)**
 
-Reduce SVG coordinate precision to decrease file size. The optimal precision depends on the viewBox size, but in general reducing precision should be considered.
+减少 SVG 坐标精度以减小文件大小。最优精度取决于 viewBox 大小，但一般减少精度是值得考虑的。
 
-**Incorrect: excessive precision**
+**错误：过度精度**
 
 ```svg
 <path d="M 10.293847 20.847362 L 30.938472 40.192837" />
 ```
 
-**Correct: 1 decimal place**
+**正确：1 位小数**
 
 ```svg
 <path d="M 10.3 20.8 L 30.9 40.2" />
 ```
 
-**Automate with SVGO:**
+**自动化：SVGO**
 
 ```bash
 npx svgo --precision=1 --multipass icon.svg
 ```
 
-### 6.5 Prevent Hydration Mismatch Without Flickering
+### 6.5 防止水合不匹配而无闪烁
 
-**Impact: MEDIUM (avoids visual flicker and hydration errors)**
+**影响：中 (避免视觉闪烁和水合错误)**
 
-When rendering content that depends on client-side storage (localStorage, cookies), avoid both SSR breakage and post-hydration flickering by injecting a synchronous script that updates the DOM before React hydrates.
+当渲染依赖于客户端存储（localStorage, cookies）时，避免 SSR 破坏和 post-hydration 闪烁，通过注入一个同步脚本在 React 水合之前更新 DOM。
 
-**Incorrect: breaks SSR**
+**错误：SSR 破坏**
 
 ```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -1974,9 +1972,9 @@ function ThemeWrapper({ children }: { children: ReactNode }) {
 }
 ```
 
-Server-side rendering will fail because `localStorage` is undefined.
+SSR 会失败，因为 `localStorage` 是 undefined。
 
-**Incorrect: visual flickering**
+**错误：视觉闪烁**
 
 ```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -1998,9 +1996,9 @@ function ThemeWrapper({ children }: { children: ReactNode }) {
 }
 ```
 
-Component first renders with default value (`light`), then updates after hydration, causing a visible flash of incorrect content.
+组件首先渲染为默认值 (`light`), 然后在水合后更新，导致可见的错误内容。
 
-**Correct: no flicker, no hydration mismatch**
+**正确：无闪烁，无水合不匹配**
 
 ```tsx
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -2031,13 +2029,13 @@ The inline script executes synchronously before showing the element, ensuring th
 
 This pattern is especially useful for theme toggles, user preferences, authentication states, and any client-only data that should render immediately without flashing default values.
 
-### 6.6 Suppress Expected Hydration Mismatches
+### 6.6 抑制预期水合警告
 
-**Impact: LOW-MEDIUM (avoids noisy hydration warnings for known differences)**
+**影响：低-中 (避免已知差异的噪音警告)**
 
-In SSR frameworks (e.g., Next.js), some values are intentionally different on server vs client (random IDs, dates, locale/timezone formatting). For these *expected* mismatches, wrap the dynamic text in an element with `suppressHydrationWarning` to prevent noisy warnings. Do not use this to hide real bugs. Don’t overuse it.
+在 SSR 框架（如 Next.js）中，一些值在服务器和客户端上是故意不同的（随机 ID、日期、时区格式化）。对于这些 *预期* 不匹配，用 `suppressHydrationWarning` 包裹动态文本以防止噪音警告。不要用这个来隐藏真实错误。不要过度使用。
 
-**Incorrect: known mismatch warnings**
+**错误：已知差异警告**
 
 ```tsx
 function Timestamp() {
@@ -2045,7 +2043,7 @@ function Timestamp() {
 }
 ```
 
-**Correct: suppress expected mismatch only**
+**正确：抑制预期差异**
 
 ```tsx
 function Timestamp() {
@@ -2057,13 +2055,13 @@ function Timestamp() {
 }
 ```
 
-### 6.7 Use Activity Component for Show/Hide
+### 6.7 使用 Activity 组件来显示/隐藏
 
-**Impact: MEDIUM (preserves state/DOM)**
+**影响：中 (保存状态/DOM)**
 
-Use React's `<Activity>` to preserve state/DOM for expensive components that frequently toggle visibility.
+使用 React 的 `<Activity>` 来保存昂贵组件的 state/DOM。
 
-**Usage:**
+**用法：**
 
 ```tsx
 import { Activity } from 'react'
@@ -2077,15 +2075,15 @@ function Dropdown({ isOpen }: Props) {
 }
 ```
 
-Avoids expensive re-renders and state loss.
+避免昂贵的重新渲染和状态丢失。
 
-### 6.8 Use Explicit Conditional Rendering
+### 6.8 使用显式条件渲染
 
-**Impact: LOW (prevents rendering 0 or NaN)**
+**影响：低 (防止渲染 0 或 NaN)**
 
-Use explicit ternary operators (`? :`) instead of `&&` for conditional rendering when the condition can be `0`, `NaN`, or other falsy values that render.
+使用显式三元表达式 (`? :`) 而非 `&&` 进行条件渲染，当条件可以是 `0`、`NaN` 或其他假值时。
 
-**Incorrect: renders "0" when count is 0**
+**错误：当 count 是 0 时渲染 "0"**
 
 ```tsx
 function Badge({ count }: { count: number }) {
@@ -2096,11 +2094,11 @@ function Badge({ count }: { count: number }) {
   )
 }
 
-// When count = 0, renders: <div>0</div>
-// When count = 5, renders: <div><span class="badge">5</span></div>
+// 当 count = 0 时，渲染: <div>0</div>
+// 当 count = 5 时，渲染: <div><span class="badge">5</span></div>
 ```
 
-**Correct: renders nothing when count is 0**
+**正确：当 count 是 0 时渲染为空**
 
 ```tsx
 function Badge({ count }: { count: number }) {
@@ -2111,17 +2109,17 @@ function Badge({ count }: { count: number }) {
   )
 }
 
-// When count = 0, renders: <div></div>
-// When count = 5, renders: <div><span class="badge">5</span></div>
+// 当 count = 0 时，渲染: <div></div>
+// 当 count = 5 时，渲染: <div><span class="badge">5</span></div>
 ```
 
-### 6.9 Use useTransition Over Manual Loading States
+### 6.9 使用 useTransition 而非手动 loading 状态
 
-**Impact: LOW (reduces re-renders and improves code clarity)**
+**影响：低 (减少 re-renders 和改进代码清晰度)**
 
-Use `useTransition` instead of manual `useState` for loading states. This provides built-in `isPending` state and automatically manages transitions.
+使用 `useTransition` 而非手动 `useState` 来处理 loading 状态。这提供了内置的 `isPending` 状态和自动管理 transitions。
 
-**Incorrect: manual loading state**
+**错误：手动 loading 状态**
 
 ```tsx
 function SearchResults() {
@@ -2147,7 +2145,7 @@ function SearchResults() {
 }
 ```
 
-**Correct: useTransition with built-in pending state**
+**正确：useTransition 带内置 pending 状态**
 
 ```tsx
 import { useTransition, useState } from 'react'
@@ -2177,7 +2175,7 @@ function SearchResults() {
 }
 ```
 
-**Benefits:**
+**好处：**
 
 - **Automatic pending state**: No need to manually manage `setIsLoading(true/false)`
 
@@ -2191,23 +2189,23 @@ Reference: [https://react.dev/reference/react/useTransition](https://react.dev/r
 
 ---
 
-## 7. JavaScript Performance
+## 7. JavaScript 性能
 
-**Impact: LOW-MEDIUM**
+**影响：中低**
 
-Micro-optimizations for hot paths can add up to meaningful improvements.
+微优化可以带来有意义的改进。
 
-### 7.1 Avoid Layout Thrashing
+### 7.1 避免布局抖动
 
-**Impact: MEDIUM (prevents forced synchronous layouts and reduces performance bottlenecks)**
+**影响：中 (防止强制同步布局和减少性能瓶颈)**
 
-Avoid interleaving style writes with layout reads. When you read a layout property (like `offsetWidth`, `getBoundingClientRect()`, or `getComputedStyle()`) between style changes, the browser is forced to trigger a synchronous reflow.
+避免交错样式写入和布局读取。当你在样式变化之间读取布局属性（如 `offsetWidth`、`getBoundingClientRect()`、`getComputedStyle()`）时，浏览器被迫触发同步重流。
 
-**This is OK: browser batches style changes**
+**这可以：浏览器批量样式变化**
 
 ```typescript
 function updateElementStyles(element: HTMLElement) {
-  // Each line invalidates style, but browser batches the recalculation
+  // 每行无效化样式，但浏览器批量重新计算
   element.style.width = '100px'
   element.style.height = '200px'
   element.style.backgroundColor = 'blue'
@@ -2215,33 +2213,33 @@ function updateElementStyles(element: HTMLElement) {
 }
 ```
 
-**Incorrect: interleaved reads and writes force reflows**
+**错误：交错读写导致重流**
 
 ```typescript
 function layoutThrashing(element: HTMLElement) {
   element.style.width = '100px'
-  const width = element.offsetWidth  // Forces reflow
+  const width = element.offsetWidth  // 强制重流
   element.style.height = '200px'
-  const height = element.offsetHeight  // Forces another reflow
+  const height = element.offsetHeight  // 强制另一个重流
 }
 ```
 
-**Correct: batch writes, then read once**
+**正确：批量写入，然后读取一次**
 
 ```typescript
 function updateElementStyles(element: HTMLElement) {
-  // Batch all writes together
+  // 批量所有写入
   element.style.width = '100px'
   element.style.height = '200px'
   element.style.backgroundColor = 'blue'
   element.style.border = '1px solid black'
   
-  // Read after all writes are done (single reflow)
+  // 读取一次
   const { width, height } = element.getBoundingClientRect()
 }
 ```
 
-**Correct: batch reads, then writes**
+**正确：批量读取，然后写入**
 
 ```typescript
 function updateElementStyles(element: HTMLElement) {
@@ -2251,19 +2249,19 @@ function updateElementStyles(element: HTMLElement) {
 }
 ```
 
-**Better: use CSS classes**
+**更好：使用 CSS 类**
 
-**React example:**
+**React 例子：**
 
 ```tsx
-// Incorrect: interleaving style changes with layout queries
+// 错误：交错样式变化和布局查询
 function Box({ isHighlighted }: { isHighlighted: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     if (ref.current && isHighlighted) {
       ref.current.style.width = '100px'
-      const width = ref.current.offsetWidth // Forces layout
+      const width = ref.current.offsetWidth // 强制布局
       ref.current.style.height = '200px'
     }
   }, [isHighlighted])
@@ -2271,7 +2269,7 @@ function Box({ isHighlighted }: { isHighlighted: boolean }) {
   return <div ref={ref}>Content</div>
 }
 
-// Correct: toggle class
+// 正确：切换 class
 function Box({ isHighlighted }: { isHighlighted: boolean }) {
   return (
     <div className={isHighlighted ? 'highlighted-box' : ''}>
@@ -2281,17 +2279,17 @@ function Box({ isHighlighted }: { isHighlighted: boolean }) {
 }
 ```
 
-Prefer CSS classes over inline styles when possible. CSS files are cached by the browser, and classes provide better separation of concerns and are easier to maintain.
+优先使用 CSS 类而不是 inline styles。CSS 文件被浏览器缓存，类提供更好的分离关注和更容易维护。
 
-See [this gist](https://gist.github.com/paulirish/5d52fb081b3570c81e3a) and [CSS Triggers](https://csstriggers.com/) for more information on layout-forcing operations.
+见 [this gist](https://gist.github.com/paulirish/5d52fb081b3570c81e3a) 和 [CSS Triggers](https://csstriggers.com/) 获取更多关于布局强制操作的信息。
 
-### 7.2 Build Index Maps for Repeated Lookups
+### 7.2 构建索引 Map 用于重复查找
 
-**Impact: LOW-MEDIUM (1M ops to 2K ops)**
+**影响：中低 (1M ops to 2K ops)**
 
-Multiple `.find()` calls by the same key should use a Map.
+多个 `.find()` 调用应使用 Map。
 
-**Incorrect (O(n) per lookup):**
+**错误 (O(n) 每次查找):**
 
 ```typescript
 function processOrders(orders: Order[], users: User[]) {
@@ -2302,7 +2300,7 @@ function processOrders(orders: Order[], users: User[]) {
 }
 ```
 
-**Correct (O(1) per lookup):**
+**正确 (O(1) 每次查找):**
 
 ```typescript
 function processOrders(orders: Order[], users: User[]) {
@@ -2315,17 +2313,17 @@ function processOrders(orders: Order[], users: User[]) {
 }
 ```
 
-Build map once (O(n)), then all lookups are O(1).
+构建 map 一次 (O(n)), 然后所有查找都是 O(1)。
 
-For 1000 orders × 1000 users: 1M ops → 2K ops.
+对于 1000 个订单 × 1000 个用户：1M ops → 2K ops。
 
-### 7.3 Cache Property Access in Loops
+### 7.3 缓存属性访问在循环中
 
-**Impact: LOW-MEDIUM (reduces lookups)**
+**影响：中低 (减少查找)**
 
-Cache object property lookups in hot paths.
+在热点路径中缓存对象属性查找。
 
-**Incorrect: 3 lookups × N iterations**
+**错误：3 查找 × N 迭代**
 
 ```typescript
 for (let i = 0; i < arr.length; i++) {
@@ -2333,7 +2331,7 @@ for (let i = 0; i < arr.length; i++) {
 }
 ```
 
-**Correct: 1 lookup total**
+**正确：1 查找**
 
 ```typescript
 const value = obj.config.settings.value
@@ -2343,20 +2341,20 @@ for (let i = 0; i < len; i++) {
 }
 ```
 
-### 7.4 Cache Repeated Function Calls
+### 7.4 缓存重复函数调用
 
-**Impact: MEDIUM (avoid redundant computation)**
+**影响：中 (避免冗余计算)**
 
-Use a module-level Map to cache function results when the same function is called repeatedly with the same inputs during render.
+使用模块级 Map 缓存函数结果，当同一函数在渲染期间多次调用时。
 
-**Incorrect: redundant computation**
+**错误：冗余计算**
 
-```typescript
+```tsx
 function ProjectList({ projects }: { projects: Project[] }) {
   return (
     <div>
       {projects.map(project => {
-        // slugify() called 100+ times for same project names
+        // slugify() 调用 100+ 次
         const slug = slugify(project.name)
         
         return <ProjectCard key={project.id} slug={slug} />
@@ -2366,10 +2364,10 @@ function ProjectList({ projects }: { projects: Project[] }) {
 }
 ```
 
-**Correct: cached results**
+**正确：缓存结果**
 
-```typescript
-// Module-level cache
+```tsx
+// 模块级缓存
 const slugifyCache = new Map<string, string>()
 
 function cachedSlugify(text: string): string {
@@ -2385,7 +2383,7 @@ function ProjectList({ projects }: { projects: Project[] }) {
   return (
     <div>
       {projects.map(project => {
-        // Computed only once per unique project name
+        // 计算一次
         const slug = cachedSlugify(project.name)
         
         return <ProjectCard key={project.id} slug={slug} />
@@ -2395,7 +2393,7 @@ function ProjectList({ projects }: { projects: Project[] }) {
 }
 ```
 
-**Simpler pattern for single-value functions:**
+**单值函数的简化模式：**
 
 ```typescript
 let isLoggedInCache: boolean | null = null
@@ -2415,26 +2413,26 @@ function onAuthChange() {
 }
 ```
 
-Use a Map (not a hook) so it works everywhere: utilities, event handlers, not just React components.
+使用 Map (而不是 hook) 所以它在任何地方都有效：工具、事件处理器，不只是 React 组件。
 
-Reference: [https://vercel.com/blog/how-we-made-the-vercel-dashboard-twice-as-fast](https://vercel.com/blog/how-we-made-the-vercel-dashboard-twice-as-fast)
+参考：[https://vercel.com/blog/how-we-made-the-vercel-dashboard-twice-as-fast](https://vercel.com/blog/how-we-made-the-vercel-dashboard-twice-as-fast)
 
-### 7.5 Cache Storage API Calls
+### 7.5 缓存 Storage API 调用
 
-**Impact: LOW-MEDIUM (reduces expensive I/O)**
+**影响：中低 (减少昂贵 I/O)**
 
-`localStorage`, `sessionStorage`, and `document.cookie` are synchronous and expensive. Cache reads in memory.
+`localStorage`, `sessionStorage`, 和 `document.cookie` 是同步且昂贵的。缓存读取在内存中。
 
-**Incorrect: reads storage on every call**
+**错误：每次调用都读取存储**
 
 ```typescript
 function getTheme() {
   return localStorage.getItem('theme') ?? 'light'
 }
-// Called 10 times = 10 storage reads
+// 调用 10 次 = 10 次存储读取
 ```
 
-**Correct: Map cache**
+**正确：Map 缓存**
 
 ```typescript
 const storageCache = new Map<string, string | null>()
@@ -2452,9 +2450,9 @@ function setLocalStorage(key: string, value: string) {
 }
 ```
 
-Use a Map (not a hook) so it works everywhere: utilities, event handlers, not just React components.
+使用 Map (而不是 hook) 所以它在任何地方都有效：工具、事件处理器，不只是 React 组件。
 
-**Cookie caching:**
+**Cookie 缓存：**
 
 ```typescript
 let cookieCache: Record<string, string> | null = null
@@ -2469,7 +2467,7 @@ function getCookie(name: string) {
 }
 ```
 
-**Important: invalidate on external changes**
+**重要：在外部变化时无效化**
 
 ```typescript
 window.addEventListener('storage', (e) => {
@@ -2483,15 +2481,15 @@ document.addEventListener('visibilitychange', () => {
 })
 ```
 
-If storage can change externally (another tab, server-set cookies), invalidate cache:
+如果存储可以被外部更改（另一个标签，服务器设置的 cookies），无效化缓存：
 
-### 7.6 Combine Multiple Array Iterations
+### 7.6 合并多次数组迭代
 
-**Impact: LOW-MEDIUM (reduces iterations)**
+**影响：中低 (减少迭代)**
 
-Multiple `.filter()` or `.map()` calls iterate the array multiple times. Combine into one loop.
+多个 `.filter()` 或 `.map()` 调用迭代数组多次。合并为一个循环。
 
-**Incorrect: 3 iterations**
+**错误：3 次迭代**
 
 ```typescript
 const admins = users.filter(u => u.isAdmin)
@@ -2499,7 +2497,7 @@ const testers = users.filter(u => u.isTester)
 const inactive = users.filter(u => !u.isActive)
 ```
 
-**Correct: 1 iteration**
+**正确：1 次迭代**
 
 ```typescript
 const admins: User[] = []
@@ -2513,34 +2511,34 @@ for (const user of users) {
 }
 ```
 
-### 7.7 Early Length Check for Array Comparisons
+### 7.7 早期长度检查数组比较
 
-**Impact: MEDIUM-HIGH (avoids expensive operations when lengths differ)**
+**影响：中高 (避免昂贵操作当长度不同时)**
 
-When comparing arrays with expensive operations (sorting, deep equality, serialization), check lengths first. If lengths differ, the arrays cannot be equal.
+当比较数组时，如果长度不同，它们不可能相等。
 
-In real-world applications, this optimization is especially valuable when the comparison runs in hot paths (event handlers, render loops).
+在真实世界中，这在热点路径（事件处理器、渲染循环）中尤其有价值。
 
-**Incorrect: always runs expensive comparison**
+**错误：总是运行昂贵比较**
 
 ```typescript
 function hasChanges(current: string[], original: string[]) {
-  // Always sorts and joins, even when lengths differ
+  // 总是排序和连接，即使长度不同
   return current.sort().join() !== original.sort().join()
 }
 ```
 
-Two O(n log n) sorts run even when `current.length` is 5 and `original.length` is 100. There is also overhead of joining the arrays and comparing the strings.
+两个 O(n log n) 排序运行，即使 `current.length` 是 5，`original.length` 是 100。还有连接数组和比较字符串的开销。
 
-**Correct (O(1) length check first):**
+**正确 (O(1) 长度检查首先):**
 
 ```typescript
 function hasChanges(current: string[], original: string[]) {
-  // Early return if lengths differ
+  // 早期返回如果长度不同
   if (current.length !== original.length) {
     return true
   }
-  // Only sort when lengths match
+  // 只有在长度匹配时才排序
   const currentSorted = current.toSorted()
   const originalSorted = original.toSorted()
   for (let i = 0; i < currentSorted.length; i++) {
@@ -2552,23 +2550,23 @@ function hasChanges(current: string[], original: string[]) {
 }
 ```
 
-This new approach is more efficient because:
+这个新方法更高效，因为：
 
-- It avoids the overhead of sorting and joining the arrays when lengths differ
+- 它避免了当长度不同时排序和连接数组的开销
 
-- It avoids consuming memory for the joined strings (especially important for large arrays)
+- 它避免了消耗内存为连接的字符串（尤其是大数组）
 
-- It avoids mutating the original arrays
+- 它避免了突变原数组
 
-- It returns early when a difference is found
+- 它在找到差异时返回早
 
-### 7.8 Early Return from Functions
+### 7.8 早期 return from Functions
 
-**Impact: LOW-MEDIUM (avoids unnecessary computation)**
+**影响：中低 (避免不必要的计算)**
 
-Return early when result is determined to skip unnecessary processing.
+在结果确定时返回，以避免不必要的处理。
 
-**Incorrect: processes all items even after finding answer**
+**错误：处理所有项目，即使找到答案**
 
 ```typescript
 function validateUsers(users: User[]) {
@@ -2584,14 +2582,14 @@ function validateUsers(users: User[]) {
       hasError = true
       errorMessage = 'Name required'
     }
-    // Continues checking all users even after error found
+    // 继续检查所有用户，即使找到错误
   }
   
   return hasError ? { valid: false, error: errorMessage } : { valid: true }
 }
 ```
 
-**Correct: returns immediately on first error**
+**正确：立即返回第一个错误**
 
 ```typescript
 function validateUsers(users: User[]) {
@@ -2610,11 +2608,11 @@ function validateUsers(users: User[]) {
 
 ### 7.9 Hoist RegExp Creation
 
-**Impact: LOW-MEDIUM (avoids recreation)**
+**影响：中低 (避免重建)**
 
-Don't create RegExp inside render. Hoist to module scope or memoize with `useMemo()`.
+不要在渲染中创建 RegExp。上提至模块范围或用 `useMemo()` 缓存。
 
-**Incorrect: new RegExp every render**
+**错误：每次渲染都创建 RegExp**
 
 ```tsx
 function Highlighter({ text, query }: Props) {
@@ -2624,7 +2622,7 @@ function Highlighter({ text, query }: Props) {
 }
 ```
 
-**Correct: memoize or hoist**
+**正确：缓存或上提**
 
 ```tsx
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -2639,7 +2637,7 @@ function Highlighter({ text, query }: Props) {
 }
 ```
 
-**Warning: global regex has mutable state**
+**警告：global regex 有 mutable state**
 
 ```typescript
 const regex = /foo/g
@@ -2647,15 +2645,15 @@ regex.test('foo')  // true, lastIndex = 3
 regex.test('foo')  // false, lastIndex = 0
 ```
 
-Global regex (`/g`) has mutable `lastIndex` state:
+全局 regex (`/g`) 有 mutable `lastIndex` 状态：
 
 ### 7.10 Use Loop for Min/Max Instead of Sort
 
-**Impact: LOW (O(n) instead of O(n log n))**
+**影响：低 (O(n) 而非 O(n log n))**
 
-Finding the smallest or largest element only requires a single pass through the array. Sorting is wasteful and slower.
+找到最小或最大的元素只需要单次遍历。排序是浪费且慢的。
 
-**Incorrect (O(n log n) - sort to find latest):**
+**错误 (O(n log n) - sort to find latest):**
 
 ```typescript
 interface Project {
@@ -2670,9 +2668,9 @@ function getLatestProject(projects: Project[]) {
 }
 ```
 
-Sorts the entire array just to find the maximum value.
+排序整个数组，只为找到最大值。
 
-**Incorrect (O(n log n) - sort for oldest and newest):**
+**错误 (O(n log n) - sort for oldest and newest):**
 
 ```typescript
 function getOldestAndNewest(projects: Project[]) {
@@ -2681,9 +2679,9 @@ function getOldestAndNewest(projects: Project[]) {
 }
 ```
 
-Still sorts unnecessarily when only min/max are needed.
+仍然在不需要时排序。
 
-**Correct (O(n) - single loop):**
+**正确 (O(n) - 单次遍历):**
 
 ```typescript
 function getLatestProject(projects: Project[]) {
@@ -2715,9 +2713,9 @@ function getOldestAndNewest(projects: Project[]) {
 }
 ```
 
-Single pass through the array, no copying, no sorting.
+单次遍历，无复制，无排序。
 
-**Alternative: Math.min/Math.max for small arrays**
+**替代方案：Math.min/Math.max 对于小数组**
 
 ```typescript
 const numbers = [5, 2, 8, 1, 9]
@@ -2725,22 +2723,22 @@ const min = Math.min(...numbers)
 const max = Math.max(...numbers)
 ```
 
-This works for small arrays, but can be slower or just throw an error for very large arrays due to spread operator limitations. Maximal array length is approximately 124000 in Chrome 143 and 638000 in Safari 18; exact numbers may vary - see [the fiddle](https://jsfiddle.net/qw1jabsx/4/). Use the loop approach for reliability.
+这在小数组中有效，但对非常大的数组可能较慢或抛出错误，因为 spread operator 限制。最大数组长度在 Chrome 143 中约为 124000，在 Safari 18 中约为 638000；确切数字可能有所不同 - 见 [the fiddle](https://jsfiddle.net/qw1jabsx/4/). 使用循环方法更可靠。
 
 ### 7.11 Use Set/Map for O(1) Lookups
 
-**Impact: LOW-MEDIUM (O(n) to O(1))**
+**影响：中低 (O(n) 到 O(1))**
 
-Convert arrays to Set/Map for repeated membership checks.
+将数组转换为 Set/Map 用于重复成员检查。
 
-**Incorrect (O(n) per check):**
+**错误 (O(n) 每次检查):**
 
 ```typescript
 const allowedIds = ['a', 'b', 'c', ...]
 items.filter(item => allowedIds.includes(item.id))
 ```
 
-**Correct (O(1) per check):**
+**正确 (O(1) 每次检查):**
 
 ```typescript
 const allowedIds = new Set(['a', 'b', 'c', ...])
@@ -2749,15 +2747,15 @@ items.filter(item => allowedIds.has(item.id))
 
 ### 7.12 Use toSorted() Instead of sort() for Immutability
 
-**Impact: MEDIUM-HIGH (prevents mutation bugs in React state)**
+**影响：中高 (防止 React 状态中的突变 bugs)**
 
-`.sort()` mutates the array in place, which can cause bugs with React state and props. Use `.toSorted()` to create a new sorted array without mutation.
+`.sort()` 在原地突变，这可能导致 React 状态和 props 的 bugs。使用 `.toSorted()` 创建一个新排序数组，而不突变。
 
-**Incorrect: mutates original array**
+**错误：突变原数组**
 
 ```typescript
 function UserList({ users }: { users: User[] }) {
-  // Mutates the users prop array!
+  // 突变 users prop array!
   const sorted = useMemo(
     () => users.sort((a, b) => a.name.localeCompare(b.name)),
     [users]
@@ -2766,11 +2764,11 @@ function UserList({ users }: { users: User[] }) {
 }
 ```
 
-**Correct: creates new array**
+**正确：创建新数组**
 
 ```typescript
 function UserList({ users }: { users: User[] }) {
-  // Creates new sorted array, original unchanged
+  // 创建新排序数组，原数组不变
   const sorted = useMemo(
     () => users.toSorted((a, b) => a.name.localeCompare(b.name)),
     [users]
@@ -2779,46 +2777,46 @@ function UserList({ users }: { users: User[] }) {
 }
 ```
 
-**Why this matters in React:**
+**为什么这在 React 中重要：**
 
-1. Props/state mutations break React's immutability model - React expects props and state to be treated as read-only
+1. Props/state 突变破坏 React 的不可变模型 - React 期望 props 和 state 是只读的
 
-2. Causes stale closure bugs - Mutating arrays inside closures (callbacks, effects) can lead to unexpected behavior
+2. 导致 stale closure bugs - 在闭包中突变数组（回调、effect）会导致意外行为
 
-**Browser support: fallback for older browsers**
+**浏览器支持：旧浏览器的 fallback**
 
 ```typescript
 // Fallback for older browsers
 const sorted = [...items].sort((a, b) => a.value - b.value)
 ```
 
-`.toSorted()` is available in all modern browsers (Chrome 110+, Safari 16+, Firefox 115+, Node.js 20+). For older environments, use spread operator:
+`.toSorted()` 在所有现代浏览器中可用（Chrome 110+, Safari 16+, Firefox 115+, Node.js 20+）。对于旧环境，使用 spread operator：
 
-**Other immutable array methods:**
+**其他不可变数组方法：**
 
-- `.toSorted()` - immutable sort
+- `.toSorted()` - 不可变排序
 
-- `.toReversed()` - immutable reverse
+- `.toReversed()` - 不可变反转
 
-- `.toSpliced()` - immutable splice
+- `.toSpliced()` - 不可变 splice
 
-- `.with()` - immutable element replacement
+- `.with()` - 不可变元素替换
 
 ---
 
-## 8. Advanced Patterns
+## 8. 高级模式
 
-**Impact: LOW**
+**影响：低**
 
-Advanced patterns for specific cases that require careful implementation.
+高级模式用于特定情况，需要仔细实现。
 
-### 8.1 Initialize App Once, Not Per Mount
+### 8.1 应用仅初始化一次
 
-**Impact: LOW-MEDIUM (avoids duplicate init in development)**
+**影响：低-中 (避免开发中重复初始化)**
 
-Do not put app-wide initialization that must run once per app load inside `useEffect([])` of a component. Components can remount and effects will re-run. Use a module-level guard or top-level init in the entry module instead.
+不要将必须运行一次 per app load 的应用级初始化放在 `useEffect([])` 的组件中。组件可以重新挂载，effect 会重新运行。使用模块级守卫或入口模块的顶层初始化。
 
-**Incorrect: runs twice in dev, re-runs on remount**
+**错误：在开发中运行两次，重新挂载时重新运行**
 
 ```tsx
 function Comp() {
@@ -2831,7 +2829,7 @@ function Comp() {
 }
 ```
 
-**Correct: once per app load**
+**正确：一次 per app load**
 
 ```tsx
 let didInit = false
@@ -2848,15 +2846,15 @@ function Comp() {
 }
 ```
 
-Reference: [https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application](https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application)
+参考：[https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application](https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application)
 
-### 8.2 Store Event Handlers in Refs
+### 8.2 存储事件处理器在 refs 中
 
-**Impact: LOW (stable subscriptions)**
+**影响：低 (稳定订阅)**
 
-Store callbacks in refs when used in effects that shouldn't re-subscribe on callback changes.
+当用于不应在回调变化时重新订阅的 effect 中，存储回调在 refs 中。
 
-**Incorrect: re-subscribes on every render**
+**错误：每次渲染都重新订阅**
 
 ```tsx
 function useWindowEvent(event: string, handler: (e) => void) {
@@ -2867,7 +2865,7 @@ function useWindowEvent(event: string, handler: (e) => void) {
 }
 ```
 
-**Correct: stable subscription**
+**正确：稳定订阅**
 
 ```tsx
 import { useEffectEvent } from 'react'
@@ -2882,17 +2880,17 @@ function useWindowEvent(event: string, handler: (e) => void) {
 }
 ```
 
-**Alternative: use `useEffectEvent` if you're on latest React:**
+**替代方案：如果你在最新 React 上：**
 
-`useEffectEvent` provides a cleaner API for the same pattern: it creates a stable function reference that always calls the latest version of the handler.
+`useEffectEvent` 提供了更干净的 API，用于相同模式：它创建一个稳定的函数引用，总是调用最新的 handler。
 
 ### 8.3 useEffectEvent for Stable Callback Refs
 
-**Impact: LOW (prevents effect re-runs)**
+**影响：低 (防止 effect 重新运行)**
 
-Access latest values in callbacks without adding them to dependency arrays. Prevents effect re-runs while avoiding stale closures.
+访问最新值而不添加到依赖数组。防止 effect 重新运行，同时避免 stale closures。
 
-**Incorrect: effect re-runs on every callback change**
+**错误：effect 重新运行在每次回调变化时**
 
 ```tsx
 function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
@@ -2905,7 +2903,7 @@ function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
 }
 ```
 
-**Correct: using React's useEffectEvent**
+**正确：使用 React 的 useEffectEvent**
 
 ```tsx
 import { useEffectEvent } from 'react';
@@ -2923,7 +2921,7 @@ function SearchInput({ onSearch }: { onSearch: (q: string) => void }) {
 
 ---
 
-## References
+## 参考
 
 1. [https://react.dev](https://react.dev)
 2. [https://nextjs.org](https://nextjs.org)

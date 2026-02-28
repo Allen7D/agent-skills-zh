@@ -1,19 +1,19 @@
 ---
-title: Strategic Suspense Boundaries
-impact: HIGH
-impactDescription: faster initial paint
+title: 策略性 Suspense 边界
+impact: 高
+impactDescription: 更快的初始绘制
 tags: async, suspense, streaming, layout-shift
 ---
 
-## Strategic Suspense Boundaries
+## 策略性 Suspense 边界
 
-Instead of awaiting data in async components before returning JSX, use Suspense boundaries to show the wrapper UI faster while data loads.
+不要在返回 JSX 之前在异步组件中等待数据，而是使用 Suspense 边界在数据加载时更快地显示包装器 UI。
 
-**Incorrect (wrapper blocked by data fetching):**
+**错误示例（整个包装器被数据获取阻塞）：**
 
 ```tsx
 async function Page() {
-  const data = await fetchData() // Blocks entire page
+  const data = await fetchData() // 阻塞整个页面
   
   return (
     <div>
@@ -28,9 +28,9 @@ async function Page() {
 }
 ```
 
-The entire layout waits for data even though only the middle section needs it.
+整个布局等待数据，即使只有中间部分需要它。
 
-**Correct (wrapper shows immediately, data streams in):**
+**正确示例（包装器立即显示，数据流入）：**
 
 ```tsx
 function Page() {
@@ -49,18 +49,18 @@ function Page() {
 }
 
 async function DataDisplay() {
-  const data = await fetchData() // Only blocks this component
+  const data = await fetchData() // 只阻塞这个组件
   return <div>{data.content}</div>
 }
 ```
 
-Sidebar, Header, and Footer render immediately. Only DataDisplay waits for data.
+Sidebar、Header 和 Footer 立即渲染。只有 DataDisplay 等待数据。
 
-**Alternative (share promise across components):**
+**替代方案（在组件间共享 promise）：**
 
 ```tsx
 function Page() {
-  // Start fetch immediately, but don't await
+  // 立即启动获取，但不等待
   const dataPromise = fetchData()
   
   return (
@@ -77,23 +77,23 @@ function Page() {
 }
 
 function DataDisplay({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise) // Unwraps the promise
+  const data = use(dataPromise) // 解包 promise
   return <div>{data.content}</div>
 }
 
 function DataSummary({ dataPromise }: { dataPromise: Promise<Data> }) {
-  const data = use(dataPromise) // Reuses the same promise
+  const data = use(dataPromise) // 重用相同的 promise
   return <div>{data.summary}</div>
 }
 ```
 
-Both components share the same promise, so only one fetch occurs. Layout renders immediately while both components wait together.
+两个组件共享相同的 promise，所以只发生一次获取。布局立即渲染，同时两个组件一起等待。
 
-**When NOT to use this pattern:**
+**何时不使用这种模式：**
 
-- Critical data needed for layout decisions (affects positioning)
-- SEO-critical content above the fold
-- Small, fast queries where suspense overhead isn't worth it
-- When you want to avoid layout shift (loading → content jump)
+- 布局决策所需的关键数据（影响定位）
+- 首屏上方的 SEO 关键内容
+- 小型、快速查询，其中 suspense 开销不值得
+- 当你想避免布局偏移（加载 → 内容跳转）
 
-**Trade-off:** Faster initial paint vs potential layout shift. Choose based on your UX priorities.
+**权衡考虑：** 更快的初始绘制 vs 潜在的布局偏移。根据你的用户体验优先级来选择。

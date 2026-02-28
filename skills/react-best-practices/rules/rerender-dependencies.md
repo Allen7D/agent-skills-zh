@@ -1,15 +1,15 @@
 ---
-title: Narrow Effect Dependencies
-impact: LOW
-impactDescription: minimizes effect re-runs
+title: 缩小 Effect 依赖项
+impact: 低
+impactDescription: 最小化 effect 重新运行
 tags: rerender, useEffect, dependencies, optimization
 ---
 
-## Narrow Effect Dependencies
+## 缩小 Effect 依赖项
 
-Specify primitive dependencies instead of objects to minimize effect re-runs.
+指定原始依赖项而不是对象，以最小化 effect 重新运行。
 
-**Incorrect (re-runs on any user field change):**
+**错误示例（任何用户字段变化时都重新运行）：**
 
 ```tsx
 useEffect(() => {
@@ -17,7 +17,7 @@ useEffect(() => {
 }, [user])
 ```
 
-**Correct (re-runs only when id changes):**
+**正确示例（只在 id 变化时重新运行）：**
 
 ```tsx
 useEffect(() => {
@@ -25,17 +25,17 @@ useEffect(() => {
 }, [user.id])
 ```
 
-**For derived state, compute outside effect:**
+**对于派生状态，在 effect 外部计算：**
 
 ```tsx
-// Incorrect: runs on width=767, 766, 765...
+// 错误示例：在 width=767, 766, 765... 时运行
 useEffect(() => {
   if (width < 768) {
     enableMobileMode()
   }
 }, [width])
 
-// Correct: runs only on boolean transition
+// 正确示例：只在布尔转换时运行
 const isMobile = width < 768
 useEffect(() => {
   if (isMobile) {

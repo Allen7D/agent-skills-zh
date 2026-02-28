@@ -1,15 +1,15 @@
 ---
-title: Use Loop for Min/Max Instead of Sort
-impact: LOW
-impactDescription: O(n) instead of O(n log n)
+title: 使用循环而非排序来找最大/最小值
+impact: 低
+impactDescription: O(n) 而非 O(n log n)
 tags: javascript, arrays, performance, sorting, algorithms
 ---
 
-## Use Loop for Min/Max Instead of Sort
+## 使用循环而非排序来找最大/最小值
 
-Finding the smallest or largest element only requires a single pass through the array. Sorting is wasteful and slower.
+找到最小或最大元素只需要单次遍历数组。排序是浪费的且更慢。
 
-**Incorrect (O(n log n) - sort to find latest):**
+**错误示例（O(n log n) - 排序来找最新的）：**
 
 ```typescript
 interface Project {
@@ -24,9 +24,9 @@ function getLatestProject(projects: Project[]) {
 }
 ```
 
-Sorts the entire array just to find the maximum value.
+为了找最大值而对整个数组进行排序。
 
-**Incorrect (O(n log n) - sort for oldest and newest):**
+**错误示例（O(n log n) - 为最旧和最新进行排序）：**
 
 ```typescript
 function getOldestAndNewest(projects: Project[]) {
@@ -35,9 +35,9 @@ function getOldestAndNewest(projects: Project[]) {
 }
 ```
 
-Still sorts unnecessarily when only min/max are needed.
+当只需要最小/最大值时仍然不必要地进行排序。
 
-**Correct (O(n) - single loop):**
+**正确示例（O(n) - 单次循环）：**
 
 ```typescript
 function getLatestProject(projects: Project[]) {
@@ -69,9 +69,9 @@ function getOldestAndNewest(projects: Project[]) {
 }
 ```
 
-Single pass through the array, no copying, no sorting.
+单次遍历数组，无复制，无排序。
 
-**Alternative (Math.min/Math.max for small arrays):**
+**替代方案（对小数组使用 Math.min/Math.max）：**
 
 ```typescript
 const numbers = [5, 2, 8, 1, 9]
@@ -79,4 +79,4 @@ const min = Math.min(...numbers)
 const max = Math.max(...numbers)
 ```
 
-This works for small arrays, but can be slower or just throw an error for very large arrays due to spread operator limitations. Maximal array length is approximately 124000 in Chrome 143 and 638000 in Safari 18; exact numbers may vary - see [the fiddle](https://jsfiddle.net/qw1jabsx/4/). Use the loop approach for reliability.
+这对小数组有效，但由于扩展运算符的限制，对于非常大的数组可能会更慢或直接抛出错误。在 Chrome 143 中最大数组长度约为 124000，在 Safari 18 中约为 638000；确切数字可能会有所不同 - 参见[这个示例](https://jsfiddle.net/qw1jabsx/4/)。为了可靠性，请使用循环方法。

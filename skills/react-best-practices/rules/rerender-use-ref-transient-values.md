@@ -1,15 +1,15 @@
 ---
-title: Use useRef for Transient Values
-impact: MEDIUM
-impactDescription: avoids unnecessary re-renders on frequent updates
+title: 对瞬态值使用 useRef
+impact: 中等
+impactDescription: 避免频繁更新时的不必要重渲染
 tags: rerender, useref, state, performance
 ---
 
-## Use useRef for Transient Values
+## 对瞬态值使用 useRef
 
-When a value changes frequently and you don't want a re-render on every update (e.g., mouse trackers, intervals, transient flags), store it in `useRef` instead of `useState`. Keep component state for UI; use refs for temporary DOM-adjacent values. Updating a ref does not trigger a re-render.
+当值变化频繁且你不希望每次更新都触发重渲染时（例如鼠标跟踪器、定时器、瞬态标志），应该将其存储在 `useRef` 中而不是 `useState`。将组件状态用于 UI；将 refs 用于临时的 DOM 相关值。更新 ref 不会触发重渲染。
 
-**Incorrect (renders every update):**
+**错误示例（每次更新都会渲染）：**
 
 ```tsx
 function Tracker() {
@@ -36,7 +36,7 @@ function Tracker() {
 }
 ```
 
-**Correct (no re-render for tracking):**
+**正确示例（跟踪时不重渲染）：**
 
 ```tsx
 function Tracker() {

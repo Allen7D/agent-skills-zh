@@ -1,15 +1,15 @@
 ---
-title: Early Return from Functions
-impact: LOW-MEDIUM
-impactDescription: avoids unnecessary computation
+title: 函数的早期返回
+impact: 低-中等
+impactDescription: 避免不必要的计算
 tags: javascript, functions, optimization, early-return
 ---
 
-## Early Return from Functions
+## 函数的早期返回
 
-Return early when result is determined to skip unnecessary processing.
+在结果确定时早期返回，跳过不必要的处理。
 
-**Incorrect (processes all items even after finding answer):**
+**错误示例（即使在找到答案后仍然处理所有项目）：**
 
 ```typescript
 function validateUsers(users: User[]) {
@@ -25,14 +25,14 @@ function validateUsers(users: User[]) {
       hasError = true
       errorMessage = 'Name required'
     }
-    // Continues checking all users even after error found
+    // 即使在发现错误后仍继续检查所有用户
   }
   
   return hasError ? { valid: false, error: errorMessage } : { valid: true }
 }
 ```
 
-**Correct (returns immediately on first error):**
+**正确示例（在第一个错误时立即返回）：**
 
 ```typescript
 function validateUsers(users: User[]) {

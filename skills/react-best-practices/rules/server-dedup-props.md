@@ -1,65 +1,65 @@
 ---
-title: Avoid Duplicate Serialization in RSC Props
+title: 避免 RSC Props 的重复序列化
 impact: LOW
-impactDescription: reduces network payload by avoiding duplicate serialization
+impactDescription: 通过避免重复序列化减少网络负载
 tags: server, rsc, serialization, props, client-components
 ---
 
-## Avoid Duplicate Serialization in RSC Props
+## 避免 RSC Props 的重复序列化
 
-**Impact: LOW (reduces network payload by avoiding duplicate serialization)**
+**影响：低（通过避免重复序列化减少网络负载）**
 
-RSC→client serialization deduplicates by object reference, not value. Same reference = serialized once; new reference = serialized again. Do transformations (`.toSorted()`, `.filter()`, `.map()`) in client, not server.
+RSC→client 的序列化是按对象引用去重的，而不是按值。相同引用 = 只序列化一次；新引用 = 再序列化。请在客户端做变换（`.toSorted()`, `.filter()`, `.map()`），不要在服务端。
 
-**Incorrect (duplicates array):**
+**错误（数组被重复序列化）：**
 
 ```tsx
-// RSC: sends 6 strings (2 arrays × 3 items)
+// RSC: 发送 6 个字符串（2 个数组 × 3 个元素）
 <ClientList usernames={usernames} usernamesOrdered={usernames.toSorted()} />
 ```
 
-**Correct (sends 3 strings):**
+**正确（只发送 3 个字符串）：**
 
 ```tsx
-// RSC: send once
+// RSC: 只发送一次
 <ClientList usernames={usernames} />
 
-// Client: transform there
+// 客户端：在这里变换
 'use client'
 const sorted = useMemo(() => [...usernames].sort(), [usernames])
 ```
 
-**Nested deduplication behavior:**
+**嵌套去重行为：**
 
-Deduplication works recursively. Impact varies by data type:
+去重是递归的。影响因数据类型而异：
 
-- `string[]`, `number[]`, `boolean[]`: **HIGH impact** - array + all primitives fully duplicated
-- `object[]`: **LOW impact** - array duplicated, but nested objects deduplicated by reference
+- `string[]`, `number[]`, `boolean[]`: **高影响** - 数组和所有原始类型都会被完全复制
+- `object[]`: **低影响** - 只复制数组结构，嵌套对象按引用去重
 
 ```tsx
-// string[] - duplicates everything
-usernames={['a','b']} sorted={usernames.toSorted()} // sends 4 strings
+// string[] - 全部重复
+usernames={['a','b']} sorted={usernames.toSorted()} // 发送 4 个字符串
 
-// object[] - duplicates array structure only
-users={[{id:1},{id:2}]} sorted={users.toSorted()} // sends 2 arrays + 2 unique objects (not 4)
+// object[] - 只复制数组结构
+users={[{id:1},{id:2}]} sorted={users.toSorted()} // 发送 2 个数组 + 2 个唯一对象（不是 4 个）
 ```
 
-**Operations breaking deduplication (create new references):**
+**会破坏去重的操作（创建新引用）：**
 
-- Arrays: `.toSorted()`, `.filter()`, `.map()`, `.slice()`, `[...arr]`
-- Objects: `{...obj}`, `Object.assign()`, `structuredClone()`, `JSON.parse(JSON.stringify())`
+- 数组：`.toSorted()`, `.filter()`, `.map()`, `.slice()`, `[...arr]`
+- 对象：`{...obj}`, `Object.assign()`, `structuredClone()`, `JSON.parse(JSON.stringify())`
 
-**More examples:**
+**更多示例：**
 
 ```tsx
-// ❌ Bad
+// ❌ 错误
 <C users={users} active={users.filter(u => u.active)} />
 <C product={product} productName={product.name} />
 
-// ✅ Good
+// ✅ 正确
 <C users={users} />
 <C product={product} />
-// Do filtering/destructuring in client
+// 在客户端做过滤/解构
 ```
 
-**Exception:** Pass derived data when transformation is expensive or client doesn't need original.
+**例外：** 当变换很昂贵或客户端不需要原始数据时，可以传递派生数据。

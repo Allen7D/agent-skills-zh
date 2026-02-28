@@ -1,22 +1,22 @@
 ---
-title: Cross-Request LRU Caching
+title: 跨请求 LRU 缓存
 impact: HIGH
-impactDescription: caches across requests
+impactDescription: 跨请求缓存
 tags: server, cache, lru, cross-request
 ---
 
-## Cross-Request LRU Caching
+## 跨请求 LRU 缓存
 
-`React.cache()` only works within one request. For data shared across sequential requests (user clicks button A then button B), use an LRU cache.
+`React.cache()` 只在单个请求内有效。对于需要在连续请求间共享的数据（如用户连续点击多个端点都需要同一数据），请使用 LRU 缓存。
 
-**Implementation:**
+**实现示例：**
 
 ```typescript
 import { LRUCache } from 'lru-cache'
 
 const cache = new LRUCache<string, any>({
   max: 1000,
-  ttl: 5 * 60 * 1000  // 5 minutes
+  ttl: 5 * 60 * 1000  // 5 分钟
 })
 
 export async function getUser(id: string) {
@@ -28,14 +28,14 @@ export async function getUser(id: string) {
   return user
 }
 
-// Request 1: DB query, result cached
-// Request 2: cache hit, no DB query
+// 请求1：数据库查询，结果缓存
+// 请求2：缓存命中，无需数据库查询
 ```
 
-Use when sequential user actions hit multiple endpoints needing the same data within seconds.
+适用于用户在几秒内连续操作多个端点且需要相同数据的场景。
 
-**With Vercel's [Fluid Compute](https://vercel.com/docs/fluid-compute):** LRU caching is especially effective because multiple concurrent requests can share the same function instance and cache. This means the cache persists across requests without needing external storage like Redis.
+**在 Vercel [Fluid Compute](https://vercel.com/docs/fluid-compute) 下：** LRU 缓存尤其有效，因为多个并发请求可以共享同一个函数实例和缓存。这意味着缓存可跨请求持久，无需 Redis 等外部存储。
 
-**In traditional serverless:** Each invocation runs in isolation, so consider Redis for cross-process caching.
+**在传统 serverless 下：** 每次调用都是隔离的，建议用 Redis 等跨进程缓存。
 
-Reference: [https://github.com/isaacs/node-lru-cache](https://github.com/isaacs/node-lru-cache)
+参考：[https://github.com/isaacs/node-lru-cache](https://github.com/isaacs/node-lru-cache)

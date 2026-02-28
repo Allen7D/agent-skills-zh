@@ -1,15 +1,15 @@
 ---
-title: Extract to Memoized Components
+title: 提取为 Memo 组件
 impact: MEDIUM
-impactDescription: enables early returns
+impactDescription: 支持提前返回
 tags: rerender, memo, useMemo, optimization
 ---
 
-## Extract to Memoized Components
+## 提取为 Memo 组件
 
-Extract expensive work into memoized components to enable early returns before computation.
+将耗时操作提取为 memo 组件，以便在计算前可以提前返回。
 
-**Incorrect (computes avatar even when loading):**
+**错误（即使 loading 也会计算 avatar）：**
 
 ```tsx
 function Profile({ user, loading }: Props) {
@@ -23,7 +23,7 @@ function Profile({ user, loading }: Props) {
 }
 ```
 
-**Correct (skips computation when loading):**
+**正确（loading 时跳过计算）：**
 
 ```tsx
 const UserAvatar = memo(function UserAvatar({ user }: { user: User }) {
@@ -41,4 +41,4 @@ function Profile({ user, loading }: Props) {
 }
 ```
 
-**Note:** If your project has [React Compiler](https://react.dev/learn/react-compiler) enabled, manual memoization with `memo()` and `useMemo()` is not necessary. The compiler automatically optimizes re-renders.
+**注意：** 如果你的项目启用了 [React Compiler](https://react.dev/learn/react-compiler)，则无需手动使用 `memo()` 和 `useMemo()`，编译器会自动优化重渲染。

@@ -1,31 +1,31 @@
 ---
-title: Authenticate Server Actions Like API Routes
+title: 服务端操作需鉴权（如同 API 路由）
 impact: CRITICAL
-impactDescription: prevents unauthorized access to server mutations
+impactDescription: 防止未授权访问服务端变更
 tags: server, server-actions, authentication, security, authorization
 ---
 
-## Authenticate Server Actions Like API Routes
+## 服务端操作需鉴权（如同 API 路由）
 
-**Impact: CRITICAL (prevents unauthorized access to server mutations)**
+**影响：致命（防止未授权访问服务端变更）**
 
-Server Actions (functions with `"use server"`) are exposed as public endpoints, just like API routes. Always verify authentication and authorization **inside** each Server Action—do not rely solely on middleware, layout guards, or page-level checks, as Server Actions can be invoked directly.
+Server Actions（带 `"use server"` 的函数）会作为公开端点暴露，就像 API 路由一样。务必**在每个 Server Action 内部**校验认证和授权——不要仅依赖中间件、布局守卫或页面级检查，因为 Server Actions 可以被直接调用。
 
-Next.js documentation explicitly states: "Treat Server Actions with the same security considerations as public-facing API endpoints, and verify if the user is allowed to perform a mutation."
+Next.js 文档明确指出：“应以与公开 API 端点相同的安全标准对待 Server Actions，并校验用户是否有权限执行变更。”
 
-**Incorrect (no authentication check):**
+**错误（未做认证校验）：**
 
 ```typescript
 'use server'
 
 export async function deleteUser(userId: string) {
-  // Anyone can call this! No auth check
+  // 任何人都能调用！没有认证校验
   await db.user.delete({ where: { id: userId } })
   return { success: true }
 }
 ```
 
-**Correct (authentication inside the action):**
+**正确（在 action 内部认证）：**
 
 ```typescript
 'use server'
@@ -34,16 +34,16 @@ import { verifySession } from '@/lib/auth'
 import { unauthorized } from '@/lib/errors'
 
 export async function deleteUser(userId: string) {
-  // Always check auth inside the action
+  // 必须在 action 内部校验认证
   const session = await verifySession()
   
   if (!session) {
-    throw unauthorized('Must be logged in')
+    throw unauthorized('必须登录')
   }
   
-  // Check authorization too
+  // 还要校验授权
   if (session.user.role !== 'admin' && session.user.id !== userId) {
-    throw unauthorized('Cannot delete other users')
+    throw unauthorized('不能删除其他用户')
   }
   
   await db.user.delete({ where: { id: userId } })
@@ -51,7 +51,7 @@ export async function deleteUser(userId: string) {
 }
 ```
 
-**With input validation:**
+**带输入校验的示例：**
 
 ```typescript
 'use server'
@@ -66,21 +66,21 @@ const updateProfileSchema = z.object({
 })
 
 export async function updateProfile(data: unknown) {
-  // Validate input first
+  // 先校验输入
   const validated = updateProfileSchema.parse(data)
   
-  // Then authenticate
+  // 再认证
   const session = await verifySession()
   if (!session) {
-    throw new Error('Unauthorized')
+    throw new Error('未授权')
   }
   
-  // Then authorize
+  // 再授权
   if (session.user.id !== validated.userId) {
-    throw new Error('Can only update own profile')
+    throw new Error('只能修改自己的资料')
   }
   
-  // Finally perform the mutation
+  // 最后执行变更
   await db.user.update({
     where: { id: validated.userId },
     data: {
@@ -93,4 +93,4 @@ export async function updateProfile(data: unknown) {
 }
 ```
 
-Reference: [https://nextjs.org/docs/app/guides/authentication](https://nextjs.org/docs/app/guides/authentication)
+参考：[https://nextjs.org/docs/app/guides/authentication](https://nextjs.org/docs/app/guides/authentication)

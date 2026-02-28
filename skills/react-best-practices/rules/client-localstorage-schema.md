@@ -1,23 +1,23 @@
 ---
-title: Version and Minimize localStorage Data
-impact: MEDIUM
-impactDescription: prevents schema conflicts, reduces storage size
+title: localStorage 数据的版本化和最小化
+impact: 中等
+impactDescription: 防止模式冲突，减少存储大小
 tags: client, localStorage, storage, versioning, data-minimization
 ---
 
-## Version and Minimize localStorage Data
+## localStorage 数据的版本化和最小化
 
-Add version prefix to keys and store only needed fields. Prevents schema conflicts and accidental storage of sensitive data.
+在键中添加版本前缀，只存储所需字段。防止模式冲突和意外存储敏感数据。
 
-**Incorrect:**
+**错误示例：**
 
 ```typescript
-// No version, stores everything, no error handling
+// 没有版本，存储一切，没有错误处理
 localStorage.setItem('userConfig', JSON.stringify(fullUserObject))
 const data = localStorage.getItem('userConfig')
 ```
 
-**Correct:**
+**正确示例：**
 
 ```typescript
 const VERSION = 'v2'
@@ -26,7 +26,7 @@ function saveConfig(config: { theme: string; language: string }) {
   try {
     localStorage.setItem(`userConfig:${VERSION}`, JSON.stringify(config))
   } catch {
-    // Throws in incognito/private browsing, quota exceeded, or disabled
+    // 在隐身/私人浏览、配额超限或禁用时抛出异常
   }
 }
 
@@ -39,7 +39,7 @@ function loadConfig() {
   }
 }
 
-// Migration from v1 to v2
+// 从 v1 到 v2 的迁移
 function migrate() {
   try {
     const v1 = localStorage.getItem('userConfig:v1')
@@ -52,10 +52,10 @@ function migrate() {
 }
 ```
 
-**Store minimal fields from server responses:**
+**从服务器响应中存储最少字段：**
 
 ```typescript
-// User object has 20+ fields, only store what UI needs
+// 用户对象有20+个字段，只存储 UI 所需的
 function cachePrefs(user: FullUser) {
   try {
     localStorage.setItem('prefs:v1', JSON.stringify({
@@ -66,6 +66,6 @@ function cachePrefs(user: FullUser) {
 }
 ```
 
-**Always wrap in try-catch:** `getItem()` and `setItem()` throw in incognito/private browsing (Safari, Firefox), when quota exceeded, or when disabled.
+**始终用 try-catch 包装：** 在隐身/私人浏览（Safari、Firefox）、配额超限或禁用时，`getItem()` 和 `setItem()` 会抛出异常。
 
-**Benefits:** Schema evolution via versioning, reduced storage size, prevents storing tokens/PII/internal flags.
+**好处：** 通过版本化实现模式演化，减少存储大小，防止存储 token/PII/内部标志。

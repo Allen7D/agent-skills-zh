@@ -1,15 +1,15 @@
 ---
-title: Put Interaction Logic in Event Handlers
+title: 将交互逻辑放在事件处理器中
 impact: MEDIUM
-impactDescription: avoids effect re-runs and duplicate side effects
+impactDescription: 避免 effect 重新运行和重复副作用
 tags: rerender, useEffect, events, side-effects, dependencies
 ---
 
-## Put Interaction Logic in Event Handlers
+## 将交互逻辑放在事件处理器中
 
-If a side effect is triggered by a specific user action (submit, click, drag), run it in that event handler. Do not model the action as state + effect; it makes effects re-run on unrelated changes and can duplicate the action.
+如果副作用是由特定用户操作（提交、点击、拖拽）触发的，请直接在事件处理器中执行。不要将动作建模为 state + effect；这样会导致 effect 在无关变化时重新运行，并可能重复执行动作。
 
-**Incorrect (event modeled as state + effect):**
+**错误（事件建模为 state + effect）：**
 
 ```tsx
 function Form() {
@@ -27,7 +27,7 @@ function Form() {
 }
 ```
 
-**Correct (do it in the handler):**
+**正确（直接在事件处理器中执行）：**
 
 ```tsx
 function Form() {
@@ -42,4 +42,4 @@ function Form() {
 }
 ```
 
-Reference: [Should this code move to an event handler?](https://react.dev/learn/removing-effect-dependencies#should-this-code-move-to-an-event-handler)
+参考：[是否应将代码移到事件处理器？](https://react.dev/learn/removing-effect-dependencies#should-this-code-move-to-an-event-handler)

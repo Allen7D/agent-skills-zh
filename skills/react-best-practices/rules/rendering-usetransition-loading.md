@@ -1,15 +1,15 @@
 ---
-title: Use useTransition Over Manual Loading States
+title: 优先使用 useTransition 处理 loading 状态
 impact: LOW
-impactDescription: reduces re-renders and improves code clarity
+impactDescription: 减少重渲染并提升代码清晰度
 tags: rendering, transitions, useTransition, loading, state
 ---
 
-## Use useTransition Over Manual Loading States
+## 优先使用 useTransition 处理 loading 状态
 
-Use `useTransition` instead of manual `useState` for loading states. This provides built-in `isPending` state and automatically manages transitions.
+使用 `useTransition` 替代手动 `useState` 管理 loading 状态。这样可以获得内置的 `isPending` 状态并自动管理 transitions。
 
-**Incorrect (manual loading state):**
+**错误（手动管理 loading 状态）：**
 
 ```tsx
 function SearchResults() {
@@ -35,7 +35,7 @@ function SearchResults() {
 }
 ```
 
-**Correct (useTransition with built-in pending state):**
+**正确（useTransition 内置 pending 状态）：**
 
 ```tsx
 import { useTransition, useState } from 'react'
@@ -46,10 +46,10 @@ function SearchResults() {
   const [isPending, startTransition] = useTransition()
 
   const handleSearch = (value: string) => {
-    setQuery(value) // Update input immediately
+    setQuery(value) // 立即更新输入
     
     startTransition(async () => {
-      // Fetch and update results
+      // 获取并更新结果
       const data = await fetchResults(value)
       setResults(data)
     })
@@ -65,11 +65,11 @@ function SearchResults() {
 }
 ```
 
-**Benefits:**
+**好处：**
 
-- **Automatic pending state**: No need to manually manage `setIsLoading(true/false)`
-- **Error resilience**: Pending state correctly resets even if the transition throws
-- **Better responsiveness**: Keeps the UI responsive during updates
-- **Interrupt handling**: New transitions automatically cancel pending ones
+- **自动 pending 状态**：无需手动管理 `setIsLoading(true/false)`
+- **错误容忍**：即使 transition 抛错 pending 状态也能正确重置
+- **更好响应性**：更新期间保持 UI 响应
+- **中断处理**：新 transition 会自动取消上一个 pending
 
-Reference: [useTransition](https://react.dev/reference/react/useTransition)
+参考：[useTransition](https://react.dev/reference/react/useTransition)

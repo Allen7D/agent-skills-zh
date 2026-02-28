@@ -1,46 +1,46 @@
-# Sections
+# 章节
 
-This file defines all sections, their ordering, impact levels, and descriptions.
-The section ID (in parentheses) is the filename prefix used to group rules.
+此文件定义了所有章节、其排序、影响级别和描述。
+章节 ID（括号内）是用于分组规则的文件名前缀。
 
 ---
 
-## 1. Eliminating Waterfalls (async)
+## 1. 消除瀑布链 (async)
 
-**Impact:** CRITICAL  
-**Description:** Waterfalls are the #1 performance killer. Each sequential await adds full network latency. Eliminating them yields the largest gains.
+**影响级别：** 关键  
+**描述：** 瀑布链是性能的头号杀手。每个顺序 await 都会增加完整的网络延迟。消除它们可以获得最大的收益。
 
-## 2. Bundle Size Optimization (bundle)
+## 2. 打包大小优化 (bundle)
 
-**Impact:** CRITICAL  
-**Description:** Reducing initial bundle size improves Time to Interactive and Largest Contentful Paint.
+**影响级别：** 关键  
+**描述：** 减少初始打包大小可以改善交互时间和最大内容绘制。
 
-## 3. Server-Side Performance (server)
+## 3. 服务器端性能 (server)
 
-**Impact:** HIGH  
-**Description:** Optimizing server-side rendering and data fetching eliminates server-side waterfalls and reduces response times.
+**影响级别：** 高  
+**描述：** 优化服务器端渲染和数据获取可以消除服务器端瀑布链并减少响应时间。
 
-## 4. Client-Side Data Fetching (client)
+## 4. 客户端数据获取 (client)
 
-**Impact:** MEDIUM-HIGH  
-**Description:** Automatic deduplication and efficient data fetching patterns reduce redundant network requests.
+**影响级别：** 中等-高  
+**描述：** 自动去重和高效的数据获取模式可以减少冗余的网络请求。
 
-## 5. Re-render Optimization (rerender)
+## 5. 重渲染优化 (rerender)
 
-**Impact:** MEDIUM  
-**Description:** Reducing unnecessary re-renders minimizes wasted computation and improves UI responsiveness.
+**影响级别：** 中等  
+**描述：** 减少不必要的重渲染可以最小化浪费的计算并提高 UI 响应性。
 
-## 6. Rendering Performance (rendering)
+## 6. 渲染性能 (rendering)
 
-**Impact:** MEDIUM  
-**Description:** Optimizing the rendering process reduces the work the browser needs to do.
+**影响级别：** 中等  
+**描述：** 优化渲染过程可以减少浏览器需要做的工作。
 
-## 7. JavaScript Performance (js)
+## 7. JavaScript 性能 (js)
 
-**Impact:** LOW-MEDIUM  
-**Description:** Micro-optimizations for hot paths can add up to meaningful improvements.
+**影响级别：** 低-中等  
+**描述：** 热点路径的微优化可以积累为有意义的改善。
 
-## 8. Advanced Patterns (advanced)
+## 8. 高级模式 (advanced)
 
-**Impact:** LOW  
-**Description:** Advanced patterns for specific cases that require careful implementation.
+**影响级别：** 低  
+**描述：** 针对特定情况的高级模式，需要仔细实现。

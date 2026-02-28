@@ -1,136 +1,136 @@
 ---
 name: vercel-react-best-practices
-description: React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.
+description: 来自 Vercel 工程团队的 React 和 Next.js 性能优化指南。编写、评审或重构 React/Next.js 代码时应使用本技能，以确保最佳性能模式。适用于涉及 React 组件、Next.js 页面、数据获取、包体优化或性能提升的任务。
 license: MIT
 metadata:
   author: vercel
   version: "1.0.0"
 ---
 
-# Vercel React Best Practices
+# Vercel React 最佳实践
 
-Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 57 rules across 8 categories, prioritized by impact to guide automated refactoring and code generation.
+由 Vercel 维护的 React 和 Next.js 应用性能优化综合指南。包含 8 个类别下的 57 条规则，按影响力优先级排序，用于指导自动化重构和代码生成。
 
-## When to Apply
+## 适用场景
 
-Reference these guidelines when:
-- Writing new React components or Next.js pages
-- Implementing data fetching (client or server-side)
-- Reviewing code for performance issues
-- Refactoring existing React/Next.js code
-- Optimizing bundle size or load times
+在以下情况下参考这些指南：
+- 编写新的 React 组件或 Next.js 页面
+- 实现数据获取（客户端或服务端）
+- 评审代码以发现性能问题
+- 重构现有 React/Next.js 代码
+- 优化包体积或加载时间
 
-## Rule Categories by Priority
+## 规则类别及优先级
 
-| Priority | Category | Impact | Prefix |
-|----------|----------|--------|--------|
-| 1 | Eliminating Waterfalls | CRITICAL | `async-` |
-| 2 | Bundle Size Optimization | CRITICAL | `bundle-` |
-| 3 | Server-Side Performance | HIGH | `server-` |
-| 4 | Client-Side Data Fetching | MEDIUM-HIGH | `client-` |
-| 5 | Re-render Optimization | MEDIUM | `rerender-` |
-| 6 | Rendering Performance | MEDIUM | `rendering-` |
-| 7 | JavaScript Performance | LOW-MEDIUM | `js-` |
-| 8 | Advanced Patterns | LOW | `advanced-` |
+| 优先级 | 类别 | 影响 | 前缀 |
+|--------|------|------|------|
+| 1 | 消除瀑布链 | 致命 | `async-` |
+| 2 | 包体积优化 | 致命 | `bundle-` |
+| 3 | 服务端性能 | 高 | `server-` |
+| 4 | 客户端数据获取 | 中高 | `client-` |
+| 5 | 重渲染优化 | 中 | `rerender-` |
+| 6 | 渲染性能 | 中 | `rendering-` |
+| 7 | JavaScript 性能 | 中低 | `js-` |
+| 8 | 高级模式 | 低 | `advanced-` |
 
-## Quick Reference
+## 快速参考
 
-### 1. Eliminating Waterfalls (CRITICAL)
+### 1. 消除瀑布链（致命）
 
-- `async-defer-await` - Move await into branches where actually used
-- `async-parallel` - Use Promise.all() for independent operations
-- `async-dependencies` - Use better-all for partial dependencies
-- `async-api-routes` - Start promises early, await late in API routes
-- `async-suspense-boundaries` - Use Suspense to stream content
+- `async-defer-await` - 仅在实际需要时再 await
+- `async-parallel` - 独立操作用 Promise.all() 并行
+- `async-dependencies` - 部分依赖用 better-all
+- `async-api-routes` - API 路由中尽早启动 promise，延后 await
+- `async-suspense-boundaries` - 用 Suspense 流式渲染内容
 
-### 2. Bundle Size Optimization (CRITICAL)
+### 2. 包体积优化（致命）
 
-- `bundle-barrel-imports` - Import directly, avoid barrel files
-- `bundle-dynamic-imports` - Use next/dynamic for heavy components
-- `bundle-defer-third-party` - Load analytics/logging after hydration
-- `bundle-conditional` - Load modules only when feature is activated
-- `bundle-preload` - Preload on hover/focus for perceived speed
+- `bundle-barrel-imports` - 直接导入，避免 barrel 文件
+- `bundle-dynamic-imports` - 重组件用 next/dynamic 动态加载
+- `bundle-defer-third-party` - 分析/日志等三方库延后到水合后加载
+- `bundle-conditional` - 仅在功能激活时加载模块
+- `bundle-preload` - 悬停/聚焦时预加载提升感知速度
 
-### 3. Server-Side Performance (HIGH)
+### 3. 服务端性能（高）
 
-- `server-auth-actions` - Authenticate server actions like API routes
-- `server-cache-react` - Use React.cache() for per-request deduplication
-- `server-cache-lru` - Use LRU cache for cross-request caching
-- `server-dedup-props` - Avoid duplicate serialization in RSC props
-- `server-serialization` - Minimize data passed to client components
-- `server-parallel-fetching` - Restructure components to parallelize fetches
-- `server-after-nonblocking` - Use after() for non-blocking operations
+- `server-auth-actions` - 服务端操作如 API 路由需鉴权
+- `server-cache-react` - 用 React.cache() 实现每请求去重
+- `server-cache-lru` - 跨请求缓存用 LRU
+- `server-dedup-props` - 避免 RSC props 重复序列化
+- `server-serialization` - 最小化传递给客户端组件的数据
+- `server-parallel-fetching` - 组件结构调整以并行获取数据
+- `server-after-nonblocking` - 非阻塞操作用 after()
 
-### 4. Client-Side Data Fetching (MEDIUM-HIGH)
+### 4. 客户端数据获取（中高）
 
-- `client-swr-dedup` - Use SWR for automatic request deduplication
-- `client-event-listeners` - Deduplicate global event listeners
-- `client-passive-event-listeners` - Use passive listeners for scroll
-- `client-localstorage-schema` - Version and minimize localStorage data
+- `client-swr-dedup` - 用 SWR 自动去重请求
+- `client-event-listeners` - 全局事件监听去重
+- `client-passive-event-listeners` - 滚动监听用 passive
+- `client-localstorage-schema` - localStorage 数据需版本化并最小化
 
-### 5. Re-render Optimization (MEDIUM)
+### 5. 重渲染优化（中）
 
-- `rerender-defer-reads` - Don't subscribe to state only used in callbacks
-- `rerender-memo` - Extract expensive work into memoized components
-- `rerender-memo-with-default-value` - Hoist default non-primitive props
-- `rerender-dependencies` - Use primitive dependencies in effects
-- `rerender-derived-state` - Subscribe to derived booleans, not raw values
-- `rerender-derived-state-no-effect` - Derive state during render, not effects
-- `rerender-functional-setstate` - Use functional setState for stable callbacks
-- `rerender-lazy-state-init` - Pass function to useState for expensive values
-- `rerender-simple-expression-in-memo` - Avoid memo for simple primitives
-- `rerender-move-effect-to-event` - Put interaction logic in event handlers
-- `rerender-transitions` - Use startTransition for non-urgent updates
-- `rerender-use-ref-transient-values` - Use refs for transient frequent values
+- `rerender-defer-reads` - 仅在回调中用到的 state 不要订阅
+- `rerender-memo` - 耗时操作提取为 memo 组件
+- `rerender-memo-with-default-value` - 非原始类型默认 props 上提
+- `rerender-dependencies` - effect 依赖用原始类型
+- `rerender-derived-state` - 订阅派生布尔值而非原始值
+- `rerender-derived-state-no-effect` - 派生状态应在渲染时而非 effect
+- `rerender-functional-setstate` - 用函数式 setState 保持回调稳定
+- `rerender-lazy-state-init` - 用函数初始化 useState 以延迟计算
+- `rerender-simple-expression-in-memo` - 简单原始值无需 memo
+- `rerender-move-effect-to-event` - 交互逻辑放到事件处理器
+- `rerender-transitions` - 非紧急更新用 startTransition
+- `rerender-use-ref-transient-values` - 高频临时值用 ref
 
-### 6. Rendering Performance (MEDIUM)
+### 6. 渲染性能（中）
 
-- `rendering-animate-svg-wrapper` - Animate div wrapper, not SVG element
-- `rendering-content-visibility` - Use content-visibility for long lists
-- `rendering-hoist-jsx` - Extract static JSX outside components
-- `rendering-svg-precision` - Reduce SVG coordinate precision
-- `rendering-hydration-no-flicker` - Use inline script for client-only data
-- `rendering-hydration-suppress-warning` - Suppress expected mismatches
-- `rendering-activity` - Use Activity component for show/hide
-- `rendering-conditional-render` - Use ternary, not && for conditionals
-- `rendering-usetransition-loading` - Prefer useTransition for loading state
+- `rendering-animate-svg-wrapper` - 动画应包裹 div 而非 SVG 元素
+- `rendering-content-visibility` - 长列表用 content-visibility
+- `rendering-hoist-jsx` - 静态 JSX 提取到组件外
+- `rendering-svg-precision` - 降低 SVG 坐标精度
+- `rendering-hydration-no-flicker` - 客户端数据用内联脚本防闪烁
+- `rendering-hydration-suppress-warning` - 抑制预期的水合警告
+- `rendering-activity` - 显隐用 Activity 组件
+- `rendering-conditional-render` - 条件渲染用三元表达式而非 &&
+- `rendering-usetransition-loading` - loading 状态优先用 useTransition
 
-### 7. JavaScript Performance (LOW-MEDIUM)
+### 7. JavaScript 性能（中低）
 
-- `js-batch-dom-css` - Group CSS changes via classes or cssText
-- `js-index-maps` - Build Map for repeated lookups
-- `js-cache-property-access` - Cache object properties in loops
-- `js-cache-function-results` - Cache function results in module-level Map
-- `js-cache-storage` - Cache localStorage/sessionStorage reads
-- `js-combine-iterations` - Combine multiple filter/map into one loop
-- `js-length-check-first` - Check array length before expensive comparison
-- `js-early-exit` - Return early from functions
-- `js-hoist-regexp` - Hoist RegExp creation outside loops
-- `js-min-max-loop` - Use loop for min/max instead of sort
-- `js-set-map-lookups` - Use Set/Map for O(1) lookups
-- `js-tosorted-immutable` - Use toSorted() for immutability
+- `js-batch-dom-css` - 通过类名或 cssText 批量修改 CSS
+- `js-index-maps` - 多次查找用 Map
+- `js-cache-property-access` - 循环中缓存对象属性
+- `js-cache-function-results` - 用模块级 Map 缓存函数结果
+- `js-cache-storage` - 缓存 localStorage/sessionStorage 读取
+- `js-combine-iterations` - 多次 filter/map 合并为一次循环
+- `js-length-check-first` - 先检查数组长度再做昂贵比较
+- `js-early-exit` - 函数尽早 return
+- `js-hoist-regexp` - RegExp 创建提到循环外
+- `js-min-max-loop` - 求 min/max 用循环而非 sort
+- `js-set-map-lookups` - 查找用 Set/Map 实现 O(1)
+- `js-tosorted-immutable` - 用 toSorted() 保持不可变性
 
-### 8. Advanced Patterns (LOW)
+### 8. 高级模式（低）
 
-- `advanced-event-handler-refs` - Store event handlers in refs
-- `advanced-init-once` - Initialize app once per app load
-- `advanced-use-latest` - useLatest for stable callback refs
+- `advanced-event-handler-refs` - 事件处理器存到 ref
+- `advanced-init-once` - 应用仅初始化一次
+- `advanced-use-latest` - 用 useLatest 保持回调引用稳定
 
-## How to Use
+## 如何使用
 
-Read individual rule files for detailed explanations and code examples:
+阅读各规则文件以获取详细解释和代码示例：
 
 ```
 rules/async-parallel.md
 rules/bundle-barrel-imports.md
 ```
 
-Each rule file contains:
-- Brief explanation of why it matters
-- Incorrect code example with explanation
-- Correct code example with explanation
-- Additional context and references
+每条规则文件包含：
+- 简要说明及其重要性
+- 错误代码示例及解释
+- 正确代码示例及解释
+- 额外背景与参考资料
 
-## Full Compiled Document
+## 完整文档
 
-For the complete guide with all rules expanded: `AGENTS.md`
+所有规则展开版请见：`AGENTS.md`

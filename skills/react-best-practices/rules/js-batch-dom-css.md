@@ -1,18 +1,18 @@
 ---
-title: Avoid Layout Thrashing
-impact: MEDIUM
-impactDescription: prevents forced synchronous layouts and reduces performance bottlenecks
+title: 避免布局抖动
+impact: 中等
+impactDescription: 防止强制同步布局，减少性能瓶颈
 tags: javascript, dom, css, performance, reflow, layout-thrashing
 ---
 
-## Avoid Layout Thrashing
+## 避免布局抖动
 
-Avoid interleaving style writes with layout reads. When you read a layout property (like `offsetWidth`, `getBoundingClientRect()`, or `getComputedStyle()`) between style changes, the browser is forced to trigger a synchronous reflow.
+避免在样式更改之间穿插布局读取。当您在样式更改之间读取布局属性（如 `offsetWidth`、`getBoundingClientRect()` 或 `getComputedStyle()`）时，浏览器被迫触发同步重排。
 
-**This is OK (browser batches style changes):**
+**这样做是可以的（浏览器批量处理样式更改）：**
 ```typescript
 function updateElementStyles(element: HTMLElement) {
-  // Each line invalidates style, but browser batches the recalculation
+  // 每一行都会使样式无效，但浏览器会批量重新计算
   element.style.width = '100px'
   element.style.height = '200px'
   element.style.backgroundColor = 'blue'
@@ -20,45 +20,45 @@ function updateElementStyles(element: HTMLElement) {
 }
 ```
 
-**Incorrect (interleaved reads and writes force reflows):**
+**错误示例（穿插的读取和写入强制重排）：**
 ```typescript
 function layoutThrashing(element: HTMLElement) {
   element.style.width = '100px'
   const width = element.offsetWidth  // Forces reflow
   element.style.height = '200px'
-  const height = element.offsetHeight  // Forces another reflow
+  const height = element.offsetHeight  // 强制另一次重排
 }
 ```
 
-**Correct (batch writes, then read once):**
+**正确示例（批量写入，然后读取一次）：**
 ```typescript
 function updateElementStyles(element: HTMLElement) {
-  // Batch all writes together
+  // 将所有写入批量处理
   element.style.width = '100px'
   element.style.height = '200px'
   element.style.backgroundColor = 'blue'
   element.style.border = '1px solid black'
   
-  // Read after all writes are done (single reflow)
+  // 所有写入完成后读取（单次重排）
   const { width, height } = element.getBoundingClientRect()
 }
 ```
 
-**Correct (batch reads, then writes):**
+**正确示例（批量读取，然后写入）：**
 ```typescript
 function avoidThrashing(element: HTMLElement) {
-  // Read phase - all layout queries first
+  // 读取阶段 - 首先进行所有布局查询
   const rect1 = element.getBoundingClientRect()
   const offsetWidth = element.offsetWidth
   const offsetHeight = element.offsetHeight
   
-  // Write phase - all style changes after
+  // 写入阶段 - 所有样式更改之后
   element.style.width = '100px'
   element.style.height = '200px'
 }
 ```
 
-**Better: use CSS classes**
+**更好：使用 CSS 类**
 ```css
 .highlighted-box {
   width: 100px;
@@ -75,16 +75,16 @@ function updateElementStyles(element: HTMLElement) {
 }
 ```
 
-**React example:**
+**React 示例：**
 ```tsx
-// Incorrect: interleaving style changes with layout queries
+// 错误示例：样式更改与布局查询穿插
 function Box({ isHighlighted }: { isHighlighted: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     if (ref.current && isHighlighted) {
       ref.current.style.width = '100px'
-      const width = ref.current.offsetWidth // Forces layout
+      const width = ref.current.offsetWidth // 强制布局
       ref.current.style.height = '200px'
     }
   }, [isHighlighted])
@@ -92,7 +92,7 @@ function Box({ isHighlighted }: { isHighlighted: boolean }) {
   return <div ref={ref}>Content</div>
 }
 
-// Correct: toggle class
+// 正确示例：切换类
 function Box({ isHighlighted }: { isHighlighted: boolean }) {
   return (
     <div className={isHighlighted ? 'highlighted-box' : ''}>
@@ -102,6 +102,6 @@ function Box({ isHighlighted }: { isHighlighted: boolean }) {
 }
 ```
 
-Prefer CSS classes over inline styles when possible. CSS files are cached by the browser, and classes provide better separation of concerns and are easier to maintain.
+在可能的情况下优先使用 CSS 类而非内联样式。CSS 文件会被浏览器缓存，类提供了更好的关注点分离且更易于维护。
 
-See [this gist](https://gist.github.com/paulirish/5d52fb081b3570c81e3a) and [CSS Triggers](https://csstriggers.com/) for more information on layout-forcing operations.
+查看[这个 gist](https://gist.github.com/paulirish/5d52fb081b3570c81e3a) 和 [CSS Triggers](https://csstriggers.com/) 了解更多关于强制布局操作的信息。

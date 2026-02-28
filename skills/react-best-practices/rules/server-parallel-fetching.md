@@ -1,15 +1,15 @@
 ---
-title: Parallel Data Fetching with Component Composition
+title: 通过组件组合实现并行数据获取
 impact: CRITICAL
-impactDescription: eliminates server-side waterfalls
+impactDescription: 消除服务端瀑布链
 tags: server, rsc, parallel-fetching, composition
 ---
 
-## Parallel Data Fetching with Component Composition
+## 通过组件组合实现并行数据获取
 
-React Server Components execute sequentially within a tree. Restructure with composition to parallelize data fetching.
+React Server 组件在树结构中是顺序执行的。通过组件组合重构，实现数据获取并行化。
 
-**Incorrect (Sidebar waits for Page's fetch to complete):**
+**错误（Sidebar 等待 Page 的 fetch 完成）：**
 
 ```tsx
 export default async function Page() {
@@ -28,7 +28,7 @@ async function Sidebar() {
 }
 ```
 
-**Correct (both fetch simultaneously):**
+**正确（两者同时获取）：**
 
 ```tsx
 async function Header() {
@@ -51,7 +51,7 @@ export default function Page() {
 }
 ```
 
-**Alternative with children prop:**
+**children prop 的替代方案：**
 
 ```tsx
 async function Header() {
@@ -80,4 +80,3 @@ export default function Page() {
     </Layout>
   )
 }
-```
